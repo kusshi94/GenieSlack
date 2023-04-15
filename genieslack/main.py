@@ -1,11 +1,9 @@
-import chatgpt
-import esa_api
 import os
 import datetime
 import slack_sdk
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-
+from genieslack import chatgpt, esa_api
 from dotenv import load_dotenv
 
 load_dotenv()
