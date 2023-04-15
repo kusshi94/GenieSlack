@@ -1,0 +1,3 @@
+# .envファイルをgit add しない.
+.env
+.DS_Store
