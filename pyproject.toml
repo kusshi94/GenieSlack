@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "genieslack"
+version = "0.1.0"
+description = ""
+authors = ["kawayama <kawa130307@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
