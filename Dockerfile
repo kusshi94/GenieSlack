@@ -1,4 +1,4 @@
-FROM python:3.11-slim as base
+FROM python:3.11 as base
 ENV TZ=Asia/Tokyo \
     \
     POETRY_VERSION=1.4.0 \
