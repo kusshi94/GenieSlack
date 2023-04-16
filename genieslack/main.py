@@ -1,12 +1,14 @@
-import os
 import datetime
+import os
+
+import dotenv
 import slack_sdk
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from genieslack import chatgpt, esa_api
-from dotenv import load_dotenv
 
-load_dotenv()
+from genieslack import chatgpt, esa_api
+
+dotenv.load_dotenv()
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
@@ -36,9 +38,9 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
         item = event["item"]
         try:
             response = client.reactions_get(
-                channel = item["channel"],
-                timestamp = item["ts"],
-                name = reaction
+                channel=item["channel"],
+                timestamp=item["ts"],
+                name=reaction
             )
             message = response["message"]
 
@@ -61,10 +63,10 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
 def post_message_to_esa(message: str, genre: str, team_name: str) -> str:
     # 投稿先の記事情報を取得
     post_info_list = esa_api.get_posts(team_name, f'title:{genre}')
-    url: str
+    
     if len(post_info_list['posts']) == 0:
         # 新規投稿
-        post_info = esa_api.send_post(team_name, esa_api.PostedInfo(
+        response = esa_api.send_post(team_name, esa_api.PostedInfo(
             name=genre,
             body_md=f'# {genre}\n## {datetime.datetime.now()}\n{message}\n'
         ))
@@ -74,8 +76,8 @@ def post_message_to_esa(message: str, genre: str, team_name: str) -> str:
         response = esa_api.edit_post(team_name, post_info['number'], esa_api.EditorialInfo(
             body_md=f"{post_info['body_md']}\n## {datetime.datetime.now()}\n{message}\n"
         ))
-        url = response['url']
-    return url
+    
+    return response['url']
 
 
 SocketModeHandler(app, SLACK_APP_TOKEN).start()
