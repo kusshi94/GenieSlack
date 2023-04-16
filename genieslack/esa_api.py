@@ -31,7 +31,7 @@ def get_posts(team_name: str, query : str = '') -> dict:
         },
     )
     j = json.loads(r.content)
-    print(j)
+    # print(j)
 
     r.raise_for_status()
 
@@ -56,7 +56,7 @@ def get_post(team_name: str, post_number: str) -> dict:
         },
     )
     j = json.loads(r.content)
-    print(j)
+    # print(j)
 
     r.raise_for_status()
 
@@ -107,7 +107,7 @@ def send_post(team_name: str, post: PostedInfo) -> dict:
         }),
     )
     j = json.loads(r.content)
-    print(j)
+    # print(j)
 
     r.raise_for_status()
 
@@ -171,7 +171,7 @@ def edit_post(team_name: str, post_number: str, post: EditorialInfo) -> dict:
         }),
     )
     j = json.loads(r.content)
-    print(j)
+    # print(j)
 
     r.raise_for_status()
 
@@ -192,7 +192,7 @@ def delete_post(team_name: str, post_number: str) -> None:
         },
     )
     j = json.loads(r.content)
-    print(j)
+    # print(j)
 
     r.raise_for_status()
 

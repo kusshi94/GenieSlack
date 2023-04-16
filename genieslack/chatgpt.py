@@ -1,15 +1,11 @@
-import openai
-
 import os
 import time
 
-from dotenv import load_dotenv
+import openai
+import dotenv
 
-load_dotenv()
-
-
+dotenv.load_dotenv()
 openai.api_key = os.getenv("OPENAI_APIKEY")
-
 
 
 def retry_wrapper(func):
@@ -25,13 +21,13 @@ def retry_wrapper(func):
         else:
             print('failed')
             return None
-        
+
         print('pass')
         return value
     return wrapper
 
 
-def summarize_message(message: str) -> str:
+def summarize_message(message: str) -> dict:
     message_prompt = f"""\
     以下の文章を要約してください。
     markdown形式で出力して下さい。
@@ -47,6 +43,7 @@ def summarize_message(message: str) -> str:
     予定
     論文
     知識
+    日程調整
     """
 
     # openai.ChatCompletion.create 毎にエラー処理したいのでこういう形にしています
@@ -60,9 +57,8 @@ def summarize_message(message: str) -> str:
             ],
             temperature=0.25,
         )
-
         return response['choices'][0]['message']['content']
-    
+
     summarized_message = inner_message()
 
     @retry_wrapper

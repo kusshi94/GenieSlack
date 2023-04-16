@@ -4,9 +4,10 @@
 ### https://raw.github.com/github/gitignore/e5323759e387ba347a9d50f8b0ddd16502eb71d4/Python.gitignore
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+*/__pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # C extensions
 *.so
