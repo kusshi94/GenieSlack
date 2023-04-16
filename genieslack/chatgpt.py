@@ -30,7 +30,7 @@ def retry_wrapper(func):
 def summarize_message(message: str) -> dict:
     message_prompt = f"""\
     以下の文章を要約してください。
-    markdown形式で出力して下さい。
+    すべてmarkdown形式のリストにして出力して下さい。
     URLがある場合は必ず含めて下さい。
     
     {message}
