@@ -42,7 +42,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
                 timestamp=item["ts"],
                 name=reaction
             )
-            message = response["message"]
+            message = response["message"]['text']
 
             # メッセージを要約
             summarized_message_gift = chatgpt.summarize_message(message)
