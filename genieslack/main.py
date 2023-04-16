@@ -6,7 +6,7 @@ import slack_sdk
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
-from genieslack import chatgpt, esa_api
+from genieslack import chatgpt, esa_api, slack
 
 dotenv.load_dotenv()
 
@@ -53,8 +53,14 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
             url = post_message_to_esa(summarized_message, genre, "ylab")
 
             # urlをprint
-            # TODO: Threadに返信するように変更
             print(url)
+
+            slack.reply_to_message(
+                client=client,
+                channel_id=item['channel'],
+                message_ts=item['ts'],
+                message_content=f"このメッセージを要約しました。\n以下の記事に書いてあります。\n{url}"
+            )
 
         except slack_sdk.errors.SlackApiError as e:
             print("Error: {}".format(e))
@@ -63,7 +69,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
 def post_message_to_esa(message: str, genre: str, team_name: str) -> str:
     # 投稿先の記事情報を取得
     post_info_list = esa_api.get_posts(team_name, f'title:{genre}')
-    
+
     if len(post_info_list['posts']) == 0:
         # 新規投稿
         response = esa_api.send_post(team_name, esa_api.PostedInfo(
