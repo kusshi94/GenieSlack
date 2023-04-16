@@ -23,3 +23,5 @@ COPY ./pyproject.toml ./poetry.lock ./
 RUN poetry install
 
 WORKDIR /app
+
+CMD python genieslack/main.py
