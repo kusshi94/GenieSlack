@@ -4,6 +4,7 @@ import os
 import dotenv
 import slack_sdk
 from slack_bolt import App
+from slack_bolt.context.say import Say
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 import chatgpt, esa_api, slack
@@ -12,8 +13,12 @@ dotenv.load_dotenv()
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
+SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 
-app = App(token=SLACK_BOT_TOKEN)
+app = App (
+    token=SLACK_BOT_TOKEN,
+    signing_secret=SLACK_SIGNING_SECRET
+)
 
 # TODO: 不要な権限を剥奪しておく
 # @app.message("hello")  # 送信されたメッセージ内に"hello"が含まれていたときのハンドラ
@@ -86,4 +91,4 @@ def post_message_to_esa(message: str, genre: str, team_name: str) -> str:
     return response['url']
 
 
-SocketModeHandler(app, SLACK_APP_TOKEN).start()
+app.start(port=3000)
