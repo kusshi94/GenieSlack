@@ -1,8 +1,6 @@
 version: "3"
 services:
-  python:
-    build:
-      context: ./
-      dockerfile: Dockerfile
+  slack-event-server:
+    build: ./slack-event-server
     volumes:
-      - ./:/app
+      - ./slack-event-server:/app/slack-event-server
