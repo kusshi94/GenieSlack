@@ -19,8 +19,7 @@ services:
     networks:
       - app_bridge
   certbot:
-    build: certbot/certbot:v2.6.0
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew -w /var/www/certbot; sleep 7d & wait $${!}; done;'"
+    build: ./certbot
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www/certbot:/var/www/certbot
