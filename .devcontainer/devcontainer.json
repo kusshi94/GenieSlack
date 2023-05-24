@@ -22,7 +22,11 @@
 			"extensions": [
 				"njpwerner.autodocstring",
 				"ms-python.python",
-				"Gruntfuggly.todo-tree"
+				"Gruntfuggly.todo-tree",
+				"ms-azuretools.vscode-docker",
+				"mhutchie.git-graph",
+				"eamodio.gitlens",
+				"ms-vsliveshare.vsliveshare"
 			]
 		}
 	}
