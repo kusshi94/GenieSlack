@@ -4,3 +4,27 @@ services:
     build: ./slack-event-server
     volumes:
       - ./slack-event-server:/app/slack-event-server
+    expose:
+      - "3000"
+    networks:
+      - app_bridge
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - ./certbot/www/certbot:/var/www/certbot
+    networks:
+      - app_bridge
+  certbot:
+    build: certbot/certbot:v2.6.0
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew -w /var/www/certbot; sleep 7d & wait $${!}; done;'"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - ./certbot/www/certbot:/var/www/certbot
+
+networks:
+  app_bridge:
+    driver: bridge

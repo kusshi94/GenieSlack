@@ -24,6 +24,4 @@ RUN poetry install
 
 WORKDIR /app
 
-EXPOSE 3000/tcp
-
 CMD python genieslack/main.py
