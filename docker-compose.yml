@@ -4,6 +4,8 @@ services:
     build: ./slack-event-server
     volumes:
       - ./slack-event-server:/app/slack-event-server
+    env_file:
+      - .env
     expose:
       - "3000"
     networks:
