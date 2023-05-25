@@ -28,6 +28,16 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www/certbot:/var/www/certbot
+  esa-oauth-server:
+    build: ./esa-oauth-server
+    volumes:
+      - ./esa-oauth-server:/app/esa-oauth-server
+    env_file:
+      - .env
+    expose:
+      - "5000"
+    networks:
+      - app_bridge
 
 networks:
   app_bridge:
