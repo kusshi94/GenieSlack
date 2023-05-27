@@ -25,6 +25,6 @@ WORKDIR /tmp
 COPY ./pyproject.toml ./poetry.lock ./
 RUN poetry install --only main --no-root
 
-WORKDIR /app/genieslack
+WORKDIR /app/slack-event-server
 
-CMD ["/bin/bash", "-c", "poetry install --only main && python genieslack/main.py.py"]
+CMD ["/bin/bash", "-c", "poetry install --only main && python genieslack/main.py"]
