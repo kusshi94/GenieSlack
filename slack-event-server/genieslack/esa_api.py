@@ -9,36 +9,57 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-def get_posts(team_name: str, query : str = '') -> dict:
+def get_posts(token: str, team_name: str, query: str = '') -> List[dict]:
     """記事の一覧を取得する
     (https://docs.esa.io/posts/102#GET%20/v1/teams/:team_name/posts)
 
     Args:
+        token (str): esaのAPIトークン
         team_name (str): チーム名
         query (str, optional): 記事を絞り込むための条件. Defaults to ''.
 
     Returns:
-        List[Post]: 記事の一覧の情報
+        List[dict]: 記事の一覧の情報
     """
-    r = requests.get(
-        f"https://api.esa.io/v1/teams/{team_name}/posts",
-        params={
-            'q': query,
-        },
-        headers={
-            'Authorization': f"Bearer {os.getenv('ESA_TOKEN')}",
-        },
-    )
-    j = json.loads(r.content)
-    # print(j)
+    # 記事一覧
+    # 1記事1dict
+    posts: List[dict] = []
 
-    r.raise_for_status()
+    # ページネーション
+    page: int = 1
+    while True:
+        # HTTP GET request
+        # 1ページ分の記事一覧を取得
+        resp = requests.get(
+            f"https://api.esa.io/v1/teams/{team_name}/posts",
+            params={
+                'q': query,
+                'page': page,
+            },
+            headers={
+                'Authorization': f"Bearer {token}",
+            },
+        )
+        
+        # HTTP エラーチェック
+        resp.raise_for_status()
 
-    return j
+        # レスポンスをdictに変換
+        resp_body: dict = json.loads(resp.content)
+
+        # 取得した記事を一覧に追加
+        posts.extend(resp_body['posts'])
+
+        # 次のページがなければ終了
+        if resp_body['next_page'] is None:
+            break
+        # ページ番号を更新
+        page = resp_body['next_page']        
+
+    return posts
 
 
-def get_post(team_name: str, post_number: str) -> dict:
+def get_post(token: str, team_name: str, post_number: str) -> dict:
     """指定された投稿を取得
     (https://docs.esa.io/posts/102#GET%20/v1/teams/:team_name/posts/:post_number)
 
@@ -52,7 +73,7 @@ def get_post(team_name: str, post_number: str) -> dict:
     r = requests.get(
         f"https://api.esa.io/v1/teams/{team_name}/posts/{post_number}",
         headers={
-            'Authorization': f"Bearer {os.getenv('ESA_TOKEN')}",
+            'Authorization': f"Bearer {token}",
         },
     )
     j = json.loads(r.content)
@@ -85,7 +106,7 @@ class PostedInfo:
         }
 
 
-def send_post(team_name: str, post: PostedInfo) -> dict:
+def send_post(token: str, team_name: str, post: PostedInfo) -> dict:
     """記事を新たに投稿
     (https://docs.esa.io/posts/102#POST%20/v1/teams/:team_name/posts)
 
@@ -99,7 +120,7 @@ def send_post(team_name: str, post: PostedInfo) -> dict:
     r = requests.post(
         f"https://api.esa.io/v1/teams/{team_name}/posts",
         headers={
-            'Authorization': f"Bearer {os.getenv('ESA_TOKEN')}",
+            'Authorization': f"Bearer {token}",
             'Content-Type': 'application/json',
         },
         data=json.dumps({
@@ -149,7 +170,7 @@ class EditorialInfo:
         }
 
 
-def edit_post(team_name: str, post_number: str, post: EditorialInfo) -> dict:
+def edit_post(token: str, team_name: str, post_number: str, post: EditorialInfo) -> dict:
     """指定した記事を編集
 
     Args:
@@ -163,7 +184,7 @@ def edit_post(team_name: str, post_number: str, post: EditorialInfo) -> dict:
     r = requests.patch(
         f"https://api.esa.io/v1/teams/{team_name}/posts/{post_number}",
         headers={
-            'Authorization': f"Bearer {os.getenv('ESA_TOKEN')}",
+            'Authorization': f"Bearer {token}",
             'Content-Type': 'application/json',
         },
         data=json.dumps({
@@ -178,7 +199,7 @@ def edit_post(team_name: str, post_number: str, post: EditorialInfo) -> dict:
     return j
 
 
-def delete_post(team_name: str, post_number: str) -> None:
+def delete_post(token: str, team_name: str, post_number: str) -> None:
     """指定した投稿を削除
 
     Args:
@@ -188,7 +209,7 @@ def delete_post(team_name: str, post_number: str) -> None:
     r = requests.delete(
         f"https://api.esa.io/v1/teams/{team_name}/posts/{post_number}",
         headers={
-            'Authorization': f"Bearer {os.getenv('ESA_TOKEN')}",
+            'Authorization': f"Bearer {token}",
         },
     )
     j = json.loads(r.content)
@@ -196,21 +217,32 @@ def delete_post(team_name: str, post_number: str) -> None:
 
     r.raise_for_status()
 
+def get_genieslack_categories(token: str, team_name: str) -> List[str]:
+    """GenieSlackが分類に使うカテゴリの一覧を取得
 
-# TODO: ただの実行例なので、使わくなったら if __name__ ... 以下は消して下さい
+    Args:
+        token (str): esaのAPIトークン
+        team_name (str): チーム名
+    
+    Returns:
+        List[str]: カテゴリの一覧
+    """
+
+    # GenieSlackの投稿する記事の一覧を取得
+    posts = get_posts(token, team_name, 'in:"GenieSlack"')
+
+    # GenieSlack/ 配下の記事名を取得し、ChatGPTに分類させる際のカテゴリとして扱う
+    # ただし、プレフィックスのGenieSlack/は除く
+    # 例：[GenieSlack/プログラミング/Python,
+    #     GenieSlack/学会情報,
+    #     GenieSlack/論文情報, ...]
+    # -> [プログラミング/Python, 学会情報, 論文情報, ...]
+    categories: List[str] = [
+        post['full_name'][len('GenieSlack/'):]
+        for post in posts
+    ]
+
+    return categories
+
 if __name__ == '__main__':
-    post_info_list = get_posts('ylab', 'Title1')
-
-    # 重複確認
-    if len(post_info_list) == 0:
-        # 新規投稿
-        post_info = send_post('ylab', PostedInfo(
-            name='Title1',
-            body_md='# title\n- line1\n- line2\n- line3'
-        ))
-    else:
-        # 追記
-        post_info = post_info_list['posts'][0]
-        edit_post('ylab', post_info['number'], EditorialInfo(
-            body_md=f"{post_info['body_md']}\n- 追記部分"
-        ))
+    print(get_genieslack_categories(os.getenv('ESA_TOKEN'), 'ylab'))
