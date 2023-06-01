@@ -1,13 +1,8 @@
 import dataclasses
 import json
-import os
 from typing import List, Optional, Union
 
 import requests
-
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def get_posts(token: str, team_name: str, query: str = '') -> List[dict]:
     """記事の一覧を取得する
@@ -243,6 +238,3 @@ def get_genieslack_categories(token: str, team_name: str) -> List[str]:
     ]
 
     return categories
-
-if __name__ == '__main__':
-    print(get_genieslack_categories(os.getenv('ESA_TOKEN'), 'ylab'))
