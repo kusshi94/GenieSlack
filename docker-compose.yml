@@ -6,6 +6,7 @@ services:
       dockerfile: ./slack-event-server/Dockerfile
     volumes:
       - ./slack-event-server:/app/slack-event-server
+      - ./database:/app/database
     env_file:
       - .env
     expose:
