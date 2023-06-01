@@ -21,7 +21,7 @@ from slack_sdk.errors import SlackApiError
 import random
 import string
 
-import chatgpt, esa_api, slack
+import chatgpt, esa_api, slack, mysql_driver
 
 dotenv.load_dotenv()
 
@@ -146,8 +146,8 @@ oauth_settings = OAuthSettings(
     scopes=["app_mentions:read", "channels:history", "channels:read","chat:write",
             "groups:history","groups:read","reactions:read","reactions:write",],
     # user_scopes=["channels:read", "chat:write"],
-    installation_store=FileInstallationStore(base_dir="./data/installations"),
-    state_store=FileOAuthStateStore(expiration_seconds=600, base_dir="./data/states"),
+    installation_store=mysql_driver.MyInstallationStore(client_id=os.environ["SLACK_CLIENT_ID"]),
+    state_store=mysql_driver.MyOAuthStateStore(expiration_seconds=600),
     callback_options=callback_options,
 )
 
