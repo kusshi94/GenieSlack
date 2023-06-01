@@ -265,6 +265,20 @@ files = [
 ]
 
 [[package]]
+name = "database"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "^3.11"
+files = []
+develop = false
+
+[package.source]
+type = "directory"
+url = "../database"
+
+[[package]]
 name = "frozenlist"
 version = "1.3.3"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -913,4 +927,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "6d35f7a00c429ac6bd7ab06a5d6a798e037a81f1f9d75b0a89113302b4edcd14"
+content-hash = "337aa080b4ec936924c3c03012eda15fac19f7749abb6c48632e41ecf7f971aa"
