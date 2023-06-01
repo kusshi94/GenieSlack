@@ -11,11 +11,6 @@ import chatgpt, esa_api, slack
 
 dotenv.load_dotenv()
 
-# from database import mysql_driver
-
-# mysql_driver.Hello()
-# exit()
-
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
