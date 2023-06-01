@@ -15,6 +15,7 @@ dotenv.load_dotenv()
 def Hello():
     print("hello from database package!")
 
+
 def slack_db_url() -> str:
     host, user, passwd, dbname = (
         os.getenv('DB_HOST'),
@@ -23,6 +24,8 @@ def slack_db_url() -> str:
         os.getenv('SLACK_DB_NAME')
     )
     return f'mysql://{user}:{passwd}@{host}/{dbname}'
+
+
 
 class MyInstallationStore(SQLAlchemyInstallationStore):
     def __init__(
@@ -47,6 +50,7 @@ class MyInstallationStore(SQLAlchemyInstallationStore):
 
         # TODO: 暗号化、復号化処理
 
+
 class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
     
     def __init__(
@@ -55,6 +59,7 @@ class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
         logger: Logger = logging.getLogger(__name__),
         table_name: str = SQLAlchemyOAuthStateStore.default_table_name,
     ):
+        
         engine: Engine = sqlalchemy.engine.create_engine(slack_db_url())
 
         super().__init__(
@@ -66,6 +71,8 @@ class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
 
         # データベースにslack_oauth_statesが存在しないとテーブルを作成する
         self.metadata.create_all(engine)
+
+
 
 class EsaDB:
 
@@ -100,12 +107,15 @@ class EsaDB:
     def __exit__(self, exception_type, exception_value, traceback):
         self.conn.close()
 
+
     # esaのurlのidからteam_idを同定する
     def get_team_id(self, esa_url_id: str) -> str:
         n = self.cur.execute("""
             SELECT slack_team_id FROM esa_oauthinfo WHERE esa_oauth_url_id = %s;
         """, (esa_url_id, ))
         return self.cur.fetchone()[0] if n != 0 else None
+
+
 
     # esaの認証情報を読み出す
     def get_token(self, team_id: str) -> str:
@@ -161,5 +171,4 @@ class EsaDB:
         """, (datetime.datetime.now() - period, ))
 
         self.conn.commit()
-
 
