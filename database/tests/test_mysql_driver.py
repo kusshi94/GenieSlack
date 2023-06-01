@@ -9,7 +9,7 @@ from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker, scoped_session
 from sqlalchemy.sql import text
 
-from genieslack.mysql_driver import slack_db_url, MyInstallationStore, MyOAuthStateStore, EsaDB
+from database.mysql_driver import slack_db_url, MyInstallationStore, MyOAuthStateStore, EsaDB
 
 
 dotenv.load_dotenv()
