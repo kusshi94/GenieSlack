@@ -1,5 +1,6 @@
 import os
 import time
+from typing import List
 
 import openai
 import dotenv
@@ -27,24 +28,23 @@ def retry_wrapper(func):
     return wrapper
 
 
-def summarize_message(message: str) -> dict:
+def summarize_message(message: str, categories: List[str]) -> dict:
+    # 要約用プロンプト
     message_prompt = f"""\
-    以下の文章を要約してください。
-    すべてmarkdown形式のリストにして出力して下さい。
-    URLがある場合は必ず含めて下さい。
-    
-    {message}
-    """
+以下の文章を要約してください。
+すべてmarkdown形式のリストにして出力して下さい。
+URLがある場合は必ず含めて下さい。
 
+{message}
+"""
+
+    # 分類用プロンプト
     genre_prompt = f"""\
-    上記の文章のジャンルを以下の中から1つ選択して下さい。
+上記の文章のジャンルを以下の中から1つ選択して下さい。
 
-    [ジャンル]
-    予定
-    論文
-    知識
-    日程調整
-    """
+[ジャンル]
+
+""" + '\n'.join(categories)
 
     # openai.ChatCompletion.create 毎にエラー処理したいのでこういう形にしています
 
@@ -93,10 +93,10 @@ git checkout -b feature/XXXX
 git branch
 ブランチを切り替える
 git checkout feature/XXX or git switch feature/XXXX\
-"""))
+""", ['日程', '研究', 'お知らせ', '技術']))
 
     print(summarize_message("""\
 明日11時から開会式なので、間に合うように、10:30目安に研究室に集合しましょう。
 勿論、調子が悪ければ決して無理せず休んでください。
 既に無理して参加してくれてると思いますが、なるべく楽しめる範囲で！頑張りましょう！\
-"""))
+""", ['日程', '研究', 'お知らせ', '技術']))
