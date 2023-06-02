@@ -23,7 +23,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 WORKDIR /tmp/slack-event-server
 COPY ./slack-event-server/pyproject.toml ./slack-event-server/poetry.lock ./
-COPY ./database/ ../database/
+COPY ./dbmgr/ ../dbmgr/
 RUN poetry install --only main --no-root
 
 WORKDIR /app/slack-event-server

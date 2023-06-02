@@ -12,6 +12,9 @@ from slack_sdk.oauth.installation_store.sqlalchemy import SQLAlchemyInstallation
 
 dotenv.load_dotenv()
 
+def Hello():
+    print('hello')
+
 def slack_db_url() -> str:
     host, user, passwd, dbname = (
         os.getenv('DB_HOST'),
