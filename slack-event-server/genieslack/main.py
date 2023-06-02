@@ -43,6 +43,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
     if reaction == "summarize":
         item = event["item"]
         try:
+            # リアクションが押されたメッセージの内容を取得
             response = client.reactions_get(
                 channel=item["channel"],
                 timestamp=item["ts"],
@@ -50,8 +51,11 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
             )
             message = response["message"]['text']
 
+            # esaから分類時に使用するカテゴリ一覧を取得
+            categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
+
             # メッセージを要約
-            summarized_message_gift = chatgpt.summarize_message(message)
+            summarized_message_gift = chatgpt.summarize_message(message, categories)
             summarized_message = summarized_message_gift["message"]
             genre = summarized_message_gift["genre"]
 
