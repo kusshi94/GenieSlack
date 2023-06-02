@@ -1,9 +1,12 @@
 version: "3"
 services:
   slack-event-server:
-    build: ./slack-event-server
+    build:
+      context: .
+      dockerfile: ./slack-event-server/Dockerfile
     volumes:
       - ./slack-event-server:/app/slack-event-server
+      - ./dbmgr:/app/dbmgr
     env_file:
       - .env
     expose:

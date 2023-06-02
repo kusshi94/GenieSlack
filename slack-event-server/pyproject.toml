@@ -3,6 +3,9 @@ name = "genieslack"
 version = "0.1.0"
 description = ""
 authors = ["kawayama <kawa130307@gmail.com>"]
+packages = [
+    { include = "dbmgr", from = "../dbmgr" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -10,10 +13,8 @@ slack-bolt = "^1.17.1"
 openai = "^0.27.4"
 requests = "^2.28.2"
 python-dotenv = "^1.0.0"
-mysqlclient = "^2.1.1"
-sqlalchemy = "^2.0.15"
 pytest = "^7.3.1"
-
+dbmgr = {path = "../dbmgr"}
 
 [build-system]
 requires = ["poetry-core"]
