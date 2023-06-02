@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import re
 from typing import List, Optional, Union
 
 import requests
@@ -233,7 +234,7 @@ def get_genieslack_categories(token: str, team_name: str) -> List[str]:
     #     GenieSlack/論文情報, ...]
     # -> [プログラミング/Python, 学会情報, 論文情報, ...]
     categories: List[str] = [
-        post['full_name'][len('GenieSlack/'):]
+        re.sub(r'^GenieSlack\/', '', post['full_name'])
         for post in posts
     ]
 
