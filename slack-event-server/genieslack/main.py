@@ -14,6 +14,7 @@ dotenv.load_dotenv()
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
+ESA_TOKEN = os.getenv("ESA_TOKEN")
 
 app = App (
     token=SLACK_BOT_TOKEN,
@@ -73,18 +74,18 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
 
 def post_message_to_esa(message: str, genre: str, team_name: str) -> str:
     # 投稿先の記事情報を取得
-    post_info_list = esa_api.get_posts(team_name, f'title:{genre}')
+    post_info_list = esa_api.get_posts(ESA_TOKEN, team_name, f'title:{genre}')
 
-    if len(post_info_list['posts']) == 0:
+    if len(post_info_list) == 0:
         # 新規投稿
-        response = esa_api.send_post(team_name, esa_api.PostedInfo(
+        response = esa_api.send_post(ESA_TOKEN, team_name, esa_api.PostedInfo(
             name=genre,
             body_md=f'# {genre}\n## {datetime.datetime.now()}\n{message}\n'
         ))
     else:
         # 追記
-        post_info = post_info_list['posts'][0]
-        response = esa_api.edit_post(team_name, post_info['number'], esa_api.EditorialInfo(
+        post_info = post_info_list[0]
+        response = esa_api.edit_post(ESA_TOKEN, team_name, post_info['number'], esa_api.EditorialInfo(
             body_md=f"{post_info['body_md']}\n## {datetime.datetime.now()}\n{message}\n"
         ))
     
