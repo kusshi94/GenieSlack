@@ -54,10 +54,24 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
             # esaから分類時に使用するカテゴリ一覧を取得
             categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
 
+            # 投稿先がない場合、作成する
+            if len(categories) == 0:
+                # TODO: デフォルトカテゴリの作成を関数化する
+                esa_api.send_post(ESA_TOKEN, 'ylab', esa_api.PostedInfo(
+                    name="GenieSlack/default",
+                    body_md="# GenieSlackによる要約メッセージ\n"
+                ))
+                categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
+
             # メッセージを要約
             summarized_message_gift = chatgpt.summarize_message(message, categories)
             summarized_message = summarized_message_gift["message"]
             genre = summarized_message_gift["genre"]
+
+            # ChatGPTの出力したgenreがesaのカテゴリ一覧に含まれているか確認
+            if genre not in categories:
+                # HACK: 含まれていない場合は適当に選択
+                genre = categories[0]
 
             # 要約したメッセージを投稿
             url = post_message_to_esa(summarized_message, genre, "ylab")
@@ -92,7 +106,7 @@ def post_message_to_esa(message: str, genre: str, team_name: str) -> str:
         response = esa_api.edit_post(ESA_TOKEN, team_name, post_info['number'], esa_api.EditorialInfo(
             body_md=f"{post_info['body_md']}\n## {datetime.datetime.now()}\n{message}\n"
         ))
-    
+    # TODO: フラグメント付きに変更
     return response['url']
 
 
