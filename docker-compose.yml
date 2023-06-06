@@ -34,6 +34,7 @@ services:
       dockerfile: ./esa-oauth-server/Dockerfile
     volumes:
       - ./esa-oauth-server:/app/esa-oauth-server
+      - ./dbmgr:/app/dbmgr
     env_file:
       - .env
     expose:
