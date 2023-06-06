@@ -8,7 +8,7 @@ from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 from requests_oauthlib import OAuth2Session
 
 from dbmgr import mysql_driver
-import esa_api
+from esa_oauth_server import esa_api
 
 dotenv.load_dotenv()
 client_id = os.environ['ESA_CLIENT_ID']
