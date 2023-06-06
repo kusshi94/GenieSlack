@@ -34,7 +34,17 @@ def start_oauth():
 
     rand_value = request.args['rand_value']
     with mysql_driver.EsaDB() as esa_db:
-        slack_team_id = esa_db.get_team_id(rand_value)
+        slack_team_id, generated_at = esa_db.get_team_id_and_generated_at(rand_value)
+
+        # アプリインストールから3時間以上経っている場合は失敗
+        now_dt = datetime.datetime.utcnow()
+        generated_at_dt = datetime.datetime.strptime(generated_at, '%Y-%m-%d %H:%M:%S.%f')
+        if now_dt - generated_at_dt > datetime.timedelta(hours=3):
+            esa_db.delete_oauthinfo(slack_team_id)
+            return render_template(
+                'error.html', 
+                error_statement='アプリインストールから3時間以上経っています。アプリを再インストールし、3時間以内に認証を行ってください。'
+            )
     
     if slack_team_id is None:
         return render_template(
@@ -99,6 +109,7 @@ def callback():
     esa_token = token['access_token']
     with mysql_driver.EsaDB() as esa_db:
         esa_db.insert_token(team_id=session['slack_team_id'], access_token=esa_token)
+        esa_db.delete_oauthinfo(team_id=session['slack_team_id'])
     
     categories = esa_api.get_genieslack_categories(esa_token, 'ylab')
     if len(categories) == 0:
