@@ -1,5 +1,6 @@
 import datetime
 import os
+from typing import List
 
 import dotenv
 from flask import Flask, render_template, redirect, request, session
@@ -7,6 +8,7 @@ from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 from requests_oauthlib import OAuth2Session
 
 from dbmgr import mysql_driver
+import esa_api
 
 dotenv.load_dotenv()
 client_id = os.environ['ESA_CLIENT_ID']
@@ -87,11 +89,36 @@ def callback():
             'error.html', 
             error_statement=f"認可コードが正しくありません。再度、アクセスしてください"
         )
-
+    
+    esa_token = token['access_token']
     with mysql_driver.EsaDB() as esa_db:
-        esa_db.insert_token(team_id=session['slack_team_id'], access_token=token['access_token'])
+        esa_db.insert_token(team_id=session['slack_team_id'], access_token=esa_token)
+    
+    categories = esa_api.get_genieslack_categories(esa_token, 'ylab')
+    if len(categories) == 0:
+        post_default_posts(esa_token, 'ylab')
 
     return render_template('finish.html')
+
+
+def post_default_posts(esa_token: str, team_name: str) -> List[str]:
+    """デフォルト記事を作成する
+
+    Args:
+        esa_token (str): esaのアクセストークン
+        team_name (str): esaのチーム名
+
+    Returns:
+        List[str]: 作成したデフォルト記事のURL
+    """
+    urls: List[str] = []
+    for genre in ['Tips', '予定', 'タスク']:
+        response = esa_api.send_post(esa_token, team_name, esa_api.PostedInfo(
+            name=f'GenieSlack/{genre}',
+            body_md=f'# {genre}\n'
+        ))
+        urls.append(response.url)
+    return urls
 
 
 if __name__ == '__main__':
