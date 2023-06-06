@@ -28,12 +28,6 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www/certbot:/var/www/certbot
-  web-server:
-    build: ./web-server
-    ports:
-      - 9000:9000
-    volumes:
-      - ./web-server:/app/web-server
 
 networks:
   app_bridge:
