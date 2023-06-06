@@ -44,8 +44,7 @@ def start_oauth():
 
         # アプリインストールから3時間以上経っている場合は失敗
         now_dt = datetime.datetime.utcnow()
-        generated_at_dt = datetime.datetime.strptime(generated_at, '%Y-%m-%d %H:%M:%S.%f')
-        if now_dt - generated_at_dt > datetime.timedelta(hours=3):
+        if now_dt - generated_at > datetime.timedelta(hours=3):
             esa_db.delete_oauthinfo(slack_team_id)
             return render_template(
                 'error.html', 
@@ -62,7 +61,6 @@ def start_oauth():
     )
 
     authorization_url, state = oauth.authorization_url('https://api.esa.io/oauth/authorize')
-    print(authorization_url, state)
 
     session['state'] = state
 
@@ -134,7 +132,7 @@ def post_default_posts(esa_token: str, team_name: str) -> List[str]:
             name=f'GenieSlack/{genre}',
             body_md=f'# {genre}\n'
         ))
-        urls.append(response.url)
+        urls.append(response['url'])
     return urls
 
 
