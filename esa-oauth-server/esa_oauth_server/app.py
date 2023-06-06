@@ -35,6 +35,12 @@ def start_oauth():
     rand_value = request.args['rand_value']
     with mysql_driver.EsaDB() as esa_db:
         slack_team_id = esa_db.get_team_id(rand_value)
+    
+    if slack_team_id is None:
+        return render_template(
+            'error.html', 
+            error_statement='URLが間違っています。もう一度、正しいEsaの認可URLにアクセスして下さい。'
+        )
 
     session.parmanet = True
     session['slack_team_id'] = slack_team_id
