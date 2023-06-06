@@ -19,7 +19,7 @@ scope = ['read', 'write']
 session_min = 10
 
 app = Flask(__name__, template_folder='../templates')
-app.secret_key = os.urandom(24)
+app.secret_key = os.environ['ESA_SERVER_KEY']
 app.permanent_session_lifetime = datetime.timedelta(minutes=session_min)
 
 
