@@ -21,10 +21,13 @@ RUN apt-get update && \
 
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
-WORKDIR /tmp
-COPY ./pyproject.toml ./poetry.lock ./
+WORKDIR /tmp/esa-oauth-server
+COPY ./esa-oauth-server/pyproject.toml ./esa-oauth-server/poetry.lock ./
+COPY ./dbmgr/ ../dbmgr/
+RUN poetry lock
 RUN poetry install --only main --no-root
 
 WORKDIR /app/esa-oauth-server
 
-CMD ["/bin/bash", "-c", "poetry install --only main && python esa_oauth_server/app.py"]
+# CMD ["/bin/bash", "-c", "poetry install --only main && python esa_oauth_server/app.py"]
+CMD ["/bin/bash", "-c", "poetry install --only main"]

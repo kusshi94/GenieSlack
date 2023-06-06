@@ -6,6 +6,8 @@ from flask import Flask, render_template, redirect, request, session
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 from requests_oauthlib import OAuth2Session
 
+from dbmgr import mysql_driver
+
 dotenv.load_dotenv()
 client_id = os.environ['ESA_CLIENT_ID']
 client_secret = os.environ['ESA_CLIENT_SECRET']
@@ -29,8 +31,8 @@ def start_oauth():
         )
 
     rand_value = request.args['rand_value']
-    # TODO: データベースからrand_valueを使ってteam_idを取得
-    slack_team_id = '<ThisIsATestValue!!!!!!!!!!!>'
+    with mysql_driver.EsaDB() as esa_db:
+        slack_team_id = esa_db.get_team_id(rand_value)
 
     session.parmanet = True
     session['slack_team_id'] = slack_team_id
@@ -86,10 +88,8 @@ def callback():
             error_statement=f"認可コードが正しくありません。再度、アクセスしてください"
         )
 
-    # TODO: 後で消す
-    print(token['access_token'], session['slack_team_id'])
-
-    # TODO: データベース保存
+    with mysql_driver.EsaDB() as esa_db:
+        esa_db.insert_token(team_id=session['slack_team_id'], access_token=token['access_token'])
 
     return render_template('finish.html')
 
