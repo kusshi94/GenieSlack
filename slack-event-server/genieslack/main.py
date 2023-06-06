@@ -121,7 +121,7 @@ def post_default_posts(esa_token: str, team_name: str) -> List[str]:
             name=f'GenieSlack/{genre}',
             body_md=f'# {genre}\n'
         ))
-        urls.append(response.url)
+        urls.append(response['url'])
     return urls
 
 app.start(port=3000)
