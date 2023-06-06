@@ -35,6 +35,12 @@ def start_oauth():
     rand_value = request.args['rand_value']
     with mysql_driver.EsaDB() as esa_db:
         slack_team_id, generated_at = esa_db.get_team_id_and_generated_at(rand_value)
+    
+        if slack_team_id is None:
+            return render_template(
+                'error.html', 
+                error_statement='URLが間違っています。もう一度、正しいEsaの認可URLにアクセスして下さい。'
+            )
 
         # アプリインストールから3時間以上経っている場合は失敗
         now_dt = datetime.datetime.utcnow()
@@ -45,12 +51,6 @@ def start_oauth():
                 'error.html', 
                 error_statement='アプリインストールから3時間以上経っています。アプリを再インストールし、3時間以内に認証を行ってください。'
             )
-    
-    if slack_team_id is None:
-        return render_template(
-            'error.html', 
-            error_statement='URLが間違っています。もう一度、正しいEsaの認可URLにアクセスして下さい。'
-        )
 
     session.parmanet = True
     session['slack_team_id'] = slack_team_id
