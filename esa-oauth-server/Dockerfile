@@ -29,5 +29,4 @@ RUN poetry install --only main --no-root
 
 WORKDIR /app/esa-oauth-server
 
-# CMD ["/bin/bash", "-c", "poetry install --only main && python esa_oauth_server/app.py"]
-CMD ["/bin/bash", "-c", "poetry install --only main"]
+CMD ["/bin/bash", "-c", "poetry install --only main && gunicorn -w 4 -b 0.0.0.0:5000 'esa_oauth_server.app:app'"]
