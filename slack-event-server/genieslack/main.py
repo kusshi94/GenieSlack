@@ -1,37 +1,31 @@
 import datetime
+import html
 import os
+import random
+import string
 from typing import List
 from urllib import parse
 
 import dotenv
 import slack_sdk
 from slack_bolt import App
-from slack_bolt.context.say import Say
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-
-import html
-from slack_bolt.oauth.oauth_settings import OAuthSettings
+from slack_bolt.context.say import Say
+from slack_bolt.oauth.callback_options import CallbackOptions, SuccessArgs, FailureArgs
 from slack_bolt.oauth.oauth_flow import OAuthFlow
+from slack_bolt.oauth.oauth_settings import OAuthSettings
 from slack_bolt.request import BoltRequest
+from slack_bolt.response import BoltResponse
+from slack_sdk.errors import SlackApiError
 from slack_sdk.oauth.installation_store import FileInstallationStore
 from slack_sdk.oauth.state_store import FileOAuthStateStore
 
-from slack_bolt.oauth.callback_options import CallbackOptions, SuccessArgs, FailureArgs
-from slack_bolt.response import BoltResponse
-from slack_sdk.errors import SlackApiError
-
-import random
-import string
-
 import chatgpt, esa_api, slack
-
 from dbmgr import mysql_driver
-import datetime
-
 
 dotenv.load_dotenv()
 
-
+DEFAULT_CATEGORIES = ['Tips', '予定', 'タスク']
 
 
 # 初回メッセージの際に、パラメータrand_valueを生成して、esaのoauthのurlを作成する。
@@ -40,7 +34,6 @@ def generate_esa_oauth_url(slack_team_id: str) -> str:
     with mysql_driver.EsaDB() as esa_db:
         esa_db.insert_oauthinfo(url_id=rand_value, team_id=slack_team_id, generated_at=str(datetime.datetime.utcnow()))
     return f"https://genieslack.kusshi.dev/esa/oauth?rand_value={rand_value}"
-
 
 
 # インストール成功時に呼び出される
@@ -74,17 +67,7 @@ def success(args: SuccessArgs) -> BoltResponse:
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":star:より初期設定のより詳しい説明はこちらをご覧ください👉"
-			},
-			"accessory": {
-				"type": "button",
-				"text": {
-					"type": "plain_text",
-					"text": "初期設定の詳細"
-				},
-				"value": "To_landingPage",
-				"url": "https://www.genieslack.kusshi.dev/how-to-use/",
-				"action_id": "button-action"
+				"text": ":star:より初期設定のより詳しい説明は<https://www.genieslack.kusshi.dev/how-to-use/|こちら>をご覧ください👉"
 			}
 		},
 		{
@@ -105,17 +88,7 @@ def success(args: SuccessArgs) -> BoltResponse:
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "① 右のボタンを押してWebブラウザで連携URLにアクセスします👉\n"
-			},
-			"accessory": {
-				"type": "button",
-				"text": {
-					"type": "plain_text",
-					"text": "esaの連携へ"
-				},
-				"value": "To_esaOAuth",
-				"url": f"{esa_oauth_url}",
-				"action_id": "button-action"
+				"text": f"① Webブラウザで<{{esa_oauth_url}}|こちら>にアクセスします\n"
 			}
 		},
 		{
@@ -129,30 +102,23 @@ def success(args: SuccessArgs) -> BoltResponse:
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "*3️⃣  esaにおけるチームの選択*\n\n⚠️ 2️⃣を終了した後に取り組んでください."
+				"text": "*3️⃣  esaのワークスペースを選択*\n\n⚠️ 2️⃣を終了した後に取り組んでください."
 			}
 		},
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "① 右のボタンを押してください👉\n"
+				"text": "① 右のボタンを押して、ワークスペースを選択してください👉\n"
 			},
 			"accessory": {
 				"type": "button",
 				"text": {
 					"type": "plain_text",
-					"text": "?"
+					"text": "Esaワークスペースの選択"
 				},
-				"value": "To_",
+				"value": "hoge",
 				"action_id": "select-esa-team"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "②...\n③...\n"
 			}
 		},
 		{
@@ -185,12 +151,9 @@ def failure(args: FailureArgs) -> BoltResponse:
         status=args.suggested_status_code,
         body="Your own response to end-users here"
     )   
-       
+
+
 callback_options = CallbackOptions(success=success, failure=failure)       
-
-
-
-
 
 
 # add to slack ページの生成に関してオーバーライド
@@ -498,8 +461,8 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
             if len(categories) == 0:
                 # デフォルト記事を作成
                 post_default_posts(esa_token, esa_team_name)
-                # カテゴリ情報を再取得
-                categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
+                # デフォルトのカテゴリをセットする
+                categories = DEFAULT_CATEGORIES
 
             # メッセージを要約
             print('Start summarize')
@@ -558,6 +521,7 @@ def post_message_to_esa(token: str, team_name: str, message: str, genre: str) ->
     # 現在の実装ではは時刻情報を見出しとして使うため、重複しないことを想定している
     return f"{response['url']}#{parse.quote(title)}"
 
+
 def post_default_posts(esa_token: str, team_name: str) -> List[str]:
     """デフォルト記事を作成する
 
@@ -569,7 +533,7 @@ def post_default_posts(esa_token: str, team_name: str) -> List[str]:
         List[str]: 作成したデフォルト記事のURL
     """
     urls: List[str] = []
-    for genre in ['Tips', '予定', 'タスク']:
+    for genre in DEFAULT_CATEGORIES:
         response = esa_api.send_post(esa_token, team_name, esa_api.PostedInfo(
             name=f'GenieSlack/{genre}',
             body_md=f'# {genre}\n'
@@ -577,4 +541,6 @@ def post_default_posts(esa_token: str, team_name: str) -> List[str]:
         urls.append(response['url'])
     return urls
 
-app.start(port=3000)
+
+if __name__ == '__main__':
+    app.start(port=3000)
