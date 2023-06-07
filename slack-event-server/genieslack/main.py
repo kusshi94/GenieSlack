@@ -162,21 +162,6 @@ app = App(
 )
 
 
-
-
-# TODO: 不要な権限を剥奪しておく
-# @app.message("hello")  # 送信されたメッセージ内に"hello"が含まれていたときのハンドラ
-# def ask_who(say):
-#     print("can I help you?")
-
-# @app.event("message") # ロギング
-# def handle_message_events(body, logger):
-#     # logger.info(body)
-#     print("OK")
-
-# TODO: 設計見直し
-
-
 @app.event("reaction_added")
 def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
     # リアクションを取得
