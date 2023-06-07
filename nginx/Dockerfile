@@ -4,7 +4,6 @@ FROM nginx:1.24.0-alpine
 RUN apk add --no-cache inotify-tools
 
 COPY ./default.conf /etc/nginx/conf.d/default.conf
-COPY ./genieslack.kusshi.dev/ /var/www/genieslack/
 
 COPY ./watch-certificate.sh /watch-certificate.sh
 RUN chmod +x /watch-certificate.sh
