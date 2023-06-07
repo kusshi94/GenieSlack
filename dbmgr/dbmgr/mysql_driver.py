@@ -108,11 +108,12 @@ class EsaDB:
 
 
     # esaのurlのidからteam_idを同定する
-    def get_team_id(self, esa_url_id: str) -> str:
+    def get_team_id_and_generated_at(self, esa_url_id: str) -> str:
         n = self.cur.execute("""
-            SELECT slack_team_id FROM esa_oauthinfo WHERE esa_oauth_url_id = %s;
+            SELECT slack_team_id, generated_at FROM esa_oauthinfo WHERE esa_oauth_url_id = %s;
         """, (esa_url_id, ))
-        return self.cur.fetchone()[0] if n != 0 else None
+        res = self.cur.fetchone()
+        return (res[0], res[1]) if n != 0 else (None, None)
 
 
 
@@ -154,10 +155,10 @@ class EsaDB:
 
         self.conn.commit()
     
-    def delete_oauthinfo(self, url_id: str):
+    def delete_oauthinfo(self, team_id: str):
         self.cur.execute("""
-            DELETE FROM esa_oauthinfo WHERE esa_oauth_url_id = %s;
-        """, (url_id, ))
+            DELETE FROM esa_oauthinfo WHERE slack_team_id = %s;
+        """, (team_id, ))
 
         self.conn.commit()
 
