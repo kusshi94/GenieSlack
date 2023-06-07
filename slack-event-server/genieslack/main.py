@@ -81,6 +81,23 @@ def success(args: SuccessArgs) -> BoltResponse:
 				"text": f"*2️⃣ GenieSlack と esa を連携させてください.*\n 以下、esa と連携させる方法の説明... \n:star: <{esa_oauth_url}|esa API へのリンク（今はテスト用にgoogle）> \n"
 			}
 		},
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "3️⃣ *esaのワークスペースを選択してください*\n次のボタンを押してください"
+            },
+            "accessory": {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Esaワークスペースの選択",
+                    "emoji": True,
+                },
+                "value": "hoge",
+                "action_id": "select-esa-team"
+            }
+        },
 		{
 			"type": "image",
 			"title": {
@@ -165,6 +182,135 @@ app = App(
         settings=oauth_settings
     )
 )
+
+
+@app.action('select-esa-team')
+def show_esa_team_select_modal(ack, client, body):
+    ack()
+
+    team_id = body['team']['id']
+    already_finished = False  # TODO: どっかからとってくる
+
+    # すでにチーム選択が完了している
+    if already_finished:
+        show_send_btn = False
+        blocks = [
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "すでにesaのチーム選択が完了しています",
+                    }
+                ]
+            }
+        ]
+    # チーム選択はまだ完了していない
+    else:
+        slack_team_id = body['team']['id']
+        esa_access_token = None  # TODO: team_idから取得
+
+        # esaのOAuth認可がまだ完了していない場合
+        if esa_access_token is None:
+            show_send_btn = False
+            blocks = [
+                {
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "*esaのOAuth認可が完了していません。*\n*認可が完了してからもう一度試してください。*"
+                        }
+                    ]
+                }
+            ]
+        # esaのOAuth認可は完了している = esaのチーム選択ができる場合
+        else:
+            team_list = ['team1', 'team2', 'team3']  # TODO: esa_access_tokenから取得
+
+            show_send_btn = True
+            blocks = [
+                {
+                    "type": "input",
+                    "block_id": "select-block",
+                    "element": {
+                        "type": "static_select",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Select an item",
+                            "emoji": True
+                        },
+                        "options": [
+                            {
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": team_name,
+                                    "emoji": True
+                                },
+                                "value": team_name
+                            }
+                            for team_name in team_list
+                        ],
+                        "action_id": "static_select-action"
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": "esaのチームを選択してください",
+                        "emoji": True
+                    }
+                }
+            ]
+
+    send_dict = {
+        'submit': {
+            'type': 'plain_text',
+            'text': '決定',
+        },
+        'close': {
+            'type': 'plain_text',
+            'text': 'キャンセル',
+        }
+    } if show_send_btn else {}
+
+    client.views_open(
+        trigger_id=body['trigger_id'],
+        view={
+            'type': 'modal',
+            'callback_id': 'esa-team-select-modal',
+            'title': {
+                'type': 'plain_text',
+                'text': 'esa: チーム選択',
+            },
+            **send_dict,
+            'blocks': blocks,
+        }
+    )
+
+
+@app.view('esa-team-select-modal')
+def handle_esa_team_select_modal(ack, view, say, body):
+    slack_team_id = body['team']['id']
+    slack_user_id = body['user']['id']
+    inputs = view['state']['values']
+    esa_team_name = inputs.get('select-block', {}).get('static_select-action', {}).get('selected_option', {}).get('value')
+
+    # チーム名が取得できなかったとき
+    if esa_team_name is None:
+        print('error')
+        ack()
+        say(
+            text='esaのチーム名の選択に失敗しました。\n選択をもう一度やり直してください。',
+            channel=slack_user_id,
+        )
+        return
+
+    # TODO: slack_team_id から esa_team_name を保存する
+
+    ack()
+    say(
+        text=f"esaのチーム名の選択に成功しました！\nチーム: {esa_team_name}",
+        channel=slack_user_id
+    )
 
 
 @app.event("reaction_added")
