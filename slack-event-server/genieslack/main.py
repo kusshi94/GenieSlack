@@ -190,13 +190,11 @@ def show_esa_team_select_modal(ack, client, body):
 
     slack_team_id = body['team']['id']
 
-    # esaのチーム名が設定されていたら、チーム名選択は既に完了している
     with mysql_driver.EsaDB() as esa_db:
-        team_name = esa_db.get_esa_team_name(slack_team_id)
-        already_finished = team_name is not None
+        esa_access_token = esa_db.get_token(slack_team_id)
 
-    # すでにチーム選択が完了している
-    if already_finished:
+    # esaのOAuth認可がまだ完了していない場合
+    if esa_access_token is None:
         show_send_btn = False
         blocks = [
             {
@@ -204,66 +202,47 @@ def show_esa_team_select_modal(ack, client, body):
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": "すでにesaのチーム選択が完了しています",
+                        "text": "*esaのOAuth認可が完了していません。*\n*認可が完了してからもう一度試してください。*"
                     }
                 ]
             }
         ]
-    # チーム選択はまだ完了していない
+    # esaのOAuth認可は完了している = esaのチーム選択ができる場合
     else:
-        with mysql_driver.EsaDB() as esa_db:
-            esa_access_token = esa_db.get_token(slack_team_id)
+        team_list = esa_api.get_teams(esa_access_token)
 
-        # esaのOAuth認可がまだ完了していない場合
-        if esa_access_token is None:
-            show_send_btn = False
-            blocks = [
-                {
-                    "type": "context",
-                    "elements": [
-                        {
-                            "type": "mrkdwn",
-                            "text": "*esaのOAuth認可が完了していません。*\n*認可が完了してからもう一度試してください。*"
-                        }
-                    ]
-                }
-            ]
-        # esaのOAuth認可は完了している = esaのチーム選択ができる場合
-        else:
-            team_list = esa_api.get_teams(esa_access_token)
-
-            show_send_btn = True
-            blocks = [
-                {
-                    "type": "input",
-                    "block_id": "select-block",
-                    "element": {
-                        "type": "static_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": "Select an item",
-                            "emoji": True
-                        },
-                        "options": [
-                            {
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": team_name,
-                                    "emoji": True
-                                },
-                                "value": team_name
-                            }
-                            for team_name in team_list
-                        ],
-                        "action_id": "static_select-action"
-                    },
-                    "label": {
+        show_send_btn = True
+        blocks = [
+            {
+                "type": "input",
+                "block_id": "select-block",
+                "element": {
+                    "type": "static_select",
+                    "placeholder": {
                         "type": "plain_text",
-                        "text": "esaのチームを選択してください",
+                        "text": "Select an item",
                         "emoji": True
-                    }
+                    },
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": team_name,
+                                "emoji": True
+                            },
+                            "value": team_name
+                        }
+                        for team_name in team_list
+                    ],
+                    "action_id": "static_select-action"
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "esaのチームを選択してください",
+                    "emoji": True
                 }
-            ]
+            }
+        ]
 
     send_dict = {
         'submit': {

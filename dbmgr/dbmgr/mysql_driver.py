@@ -138,8 +138,9 @@ class EsaDB:
     def insert_token(self, team_id: str, access_token: str):
         #TODO: 暗号化処理
         self.cur.execute("""
-            INSERT IGNORE INTO esa_access_token (slack_team_id, esa_access_token) VALUES (%s, %s);
-        """, (team_id, access_token))
+            INSERT IGNORE INTO esa_access_token (slack_team_id, esa_access_token) VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE esa_access_token = %s;
+        """, (team_id, access_token, access_token))
 
         self.conn.commit()
 
