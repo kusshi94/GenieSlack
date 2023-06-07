@@ -23,7 +23,10 @@ from slack_sdk.errors import SlackApiError
 import random
 import string
 
-import chatgpt, esa_api, slack, mysql_driver
+import chatgpt, esa_api, slack
+
+from dbmgr import mysql_driver
+
 
 dotenv.load_dotenv()
 
