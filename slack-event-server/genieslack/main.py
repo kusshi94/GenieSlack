@@ -299,7 +299,7 @@ def handle_esa_team_select_modal(ack, view, say, body):
 
 
 @app.event("reaction_added")
-def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body,):
+def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
     # リアクションを取得
     reaction = event["reaction"]
 
@@ -348,9 +348,11 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body,):
                 categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
 
             # メッセージを要約
+            print('Start summarize')
             summarized_message_gift = chatgpt.summarize_message(message, categories)
             summarized_message = summarized_message_gift["message"]
             genre = summarized_message_gift["genre"]
+            print('Finish summarize')
 
             # ChatGPTの出力したgenreがesaのカテゴリ一覧に含まれているか確認
             if genre not in categories:

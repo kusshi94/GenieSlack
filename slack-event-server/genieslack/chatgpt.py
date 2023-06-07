@@ -50,6 +50,7 @@ URLがある場合は必ず含めて下さい。
 
     @retry_wrapper
     def inner_message():
+        print('Call chatgpt.summarize_message.intter_message')
         response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo',
             messages=[
@@ -57,12 +58,14 @@ URLがある場合は必ず含めて下さい。
             ],
             temperature=0.25,
         )
+        print('Finish chatgpt.summarize_message.intter_message')
         return response['choices'][0]['message']['content']
 
     summarized_message = inner_message()
 
     @retry_wrapper
     def inner_genre():
+        print('Call chatgpt.summarize_message.inner_genre')
         response = openai.ChatCompletion.create(
             model='gpt-3.5-turbo',
             messages=[
@@ -72,7 +75,7 @@ URLがある場合は必ず含めて下さい。
             ],
             temperature=0.25,
         )
-
+        print('Finish chatgpt.summarize_message.inner_genre')
         return response['choices'][0]['message']['content']
 
     return {
