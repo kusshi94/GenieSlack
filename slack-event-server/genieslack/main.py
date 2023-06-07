@@ -26,6 +26,7 @@ import string
 import chatgpt, esa_api, slack
 
 from dbmgr import mysql_driver
+import datetime
 
 
 dotenv.load_dotenv()
@@ -35,9 +36,10 @@ dotenv.load_dotenv()
 
 # 初回メッセージの際に、パラメータrand_valueを生成して、esaのoauthのurlを作成する。
 def generate_esa_oauth_url(slack_team_id: str) -> str:
-	rand_value = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(16)])
-	# TODO: dbにslack_team_idとrandvalueを保存する (DB用のモジュールが完成したら実装)
-	return f"https://genieslack.kusshi.dev/esa/oauth?rand_value={rand_value}"
+    rand_value = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(16)])
+    with mysql_driver.EsaDB() as esa_db:
+        esa_db.insert_oauthinfo(url_id=rand_value, team_id=slack_team_id, generated_at=str(datetime.datetime.utcnow()))
+    return f"https://genieslack.kusshi.dev/esa/oauth?rand_value={rand_value}"
 
 
 
