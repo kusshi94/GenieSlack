@@ -188,8 +188,12 @@ app = App(
 def show_esa_team_select_modal(ack, client, body):
     ack()
 
-    team_id = body['team']['id']
-    already_finished = False  # TODO: どっかからとってくる
+    slack_team_id = body['team']['id']
+
+    # esaのチーム名が設定されていたら、チーム名選択は既に完了している
+    with mysql_driver.EsaDB() as esa_db:
+        team_name = esa_db.get_esa_team_name(slack_team_id)
+        already_finished = team_name is not None
 
     # すでにチーム選択が完了している
     if already_finished:
@@ -207,8 +211,8 @@ def show_esa_team_select_modal(ack, client, body):
         ]
     # チーム選択はまだ完了していない
     else:
-        slack_team_id = body['team']['id']
-        esa_access_token = None  # TODO: team_idから取得
+        with mysql_driver.EsaDB() as esa_db:
+            esa_access_token = esa_db.get_token(slack_team_id)
 
         # esaのOAuth認可がまだ完了していない場合
         if esa_access_token is None:
@@ -304,7 +308,9 @@ def handle_esa_team_select_modal(ack, view, say, body):
         )
         return
 
-    # TODO: slack_team_id から esa_team_name を保存する
+
+    with mysql_driver.EsaDB() as esa_db:
+        esa_db.update_esa_team_name(slack_team_id, esa_team_name)
 
     ack()
     say(
