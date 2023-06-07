@@ -308,7 +308,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
         item = event["item"]
         
         # esaのトークンとワークスペース名を取得
-        slack_team_id = body['team']['id']
+        slack_team_id = body['team_id']
         with mysql_driver.EsaDB() as esa_db:
             esa_token, esa_team_name = esa_db.get_token_and_team_name(slack_team_id)
             if esa_token is None:
