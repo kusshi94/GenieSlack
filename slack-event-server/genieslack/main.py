@@ -230,7 +230,7 @@ def show_esa_team_select_modal(ack, client, body):
             ]
         # esaのOAuth認可は完了している = esaのチーム選択ができる場合
         else:
-            team_list = ['team1', 'team2', 'team3']  # TODO: esa_access_tokenから取得
+            team_list = esa_api.get_teams(esa_access_token)
 
             show_send_btn = True
             blocks = [
