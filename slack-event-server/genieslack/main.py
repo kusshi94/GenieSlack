@@ -88,7 +88,7 @@ def success(args: SuccessArgs) -> BoltResponse:
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": f"① Webブラウザで<{{esa_oauth_url}}|こちら>にアクセスします\n"
+				"text": f"① Webブラウザで<{esa_oauth_url}|こちら>にアクセスします\n"
 			}
 		},
 		{
