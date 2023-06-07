@@ -1,37 +1,31 @@
 import datetime
+import html
 import os
+import random
+import string
 from typing import List
 from urllib import parse
 
 import dotenv
 import slack_sdk
 from slack_bolt import App
-from slack_bolt.context.say import Say
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-
-import html
-from slack_bolt.oauth.oauth_settings import OAuthSettings
+from slack_bolt.context.say import Say
+from slack_bolt.oauth.callback_options import CallbackOptions, SuccessArgs, FailureArgs
 from slack_bolt.oauth.oauth_flow import OAuthFlow
+from slack_bolt.oauth.oauth_settings import OAuthSettings
 from slack_bolt.request import BoltRequest
+from slack_bolt.response import BoltResponse
+from slack_sdk.errors import SlackApiError
 from slack_sdk.oauth.installation_store import FileInstallationStore
 from slack_sdk.oauth.state_store import FileOAuthStateStore
 
-from slack_bolt.oauth.callback_options import CallbackOptions, SuccessArgs, FailureArgs
-from slack_bolt.response import BoltResponse
-from slack_sdk.errors import SlackApiError
-
-import random
-import string
-
 import chatgpt, esa_api, slack
-
 from dbmgr import mysql_driver
-import datetime
-
 
 dotenv.load_dotenv()
 
-
+DEFAULT_CATEGORIES = ['Tips', '予定', 'タスク']
 
 
 # 初回メッセージの際に、パラメータrand_valueを生成して、esaのoauthのurlを作成する。
@@ -40,7 +34,6 @@ def generate_esa_oauth_url(slack_team_id: str) -> str:
     with mysql_driver.EsaDB() as esa_db:
         esa_db.insert_oauthinfo(url_id=rand_value, team_id=slack_team_id, generated_at=str(datetime.datetime.utcnow()))
     return f"https://genieslack.kusshi.dev/esa/oauth?rand_value={rand_value}"
-
 
 
 # インストール成功時に呼び出される
@@ -57,61 +50,85 @@ def success(args: SuccessArgs) -> BoltResponse:
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "こんにちは！ 👋 私はGenieSlackです！:slack:\n Slack, ChatGPT, esa を使って、Slack内のナレッジを簡単にesaにまとめられる機能をあなたに提供します！"
+				"text": "こんにちは 👋 GenieSlackを追加していただきありがとうございます！:slack:\n Slackの情報を簡潔に要約・カテゴライズして、esaでその情報を見れる機能を提供いたします!"
+			}
+		},
+		{
+			"type": "divider"
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "GenieSlackを始めるために取り組んでいただきたいことが *3つ* あります！\n"
 			}
 		},
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "GenieSlackを始めるために取り組んでいただきたいことが2点あります！"
+				"text": ":star:より初期設定のより詳しい説明は<https://www.genieslack.kusshi.dev/how-to-use/|こちら>をご覧ください👉"
 			}
 		},
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "*1️⃣ ”ワークスペース上で、「要約して(summarize)」 リアクションを作成してください。* \n 以下、要約してリアクションの作成方法の説明..."
+				"text": "*1️⃣  「要約して(summarize)」リアクションの作成* \n ① Slackを開いて、メッセージ送信欄にある絵文字ボタンをクリックします\n ②ポップアップメニューから *「絵文字を追加する」ボタン* をクリックします\n③ *「画像をアップロードする」ボタン* を押し、「要約して」用の画像を指定します\n④ *「名前を付ける」* で `:summarize:` を入力します\n⑤ 最後に *「保存する」ボタン* をクリックして、新たな絵文字の追加を完了します"
 			}
 		},
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": f"*2️⃣ GenieSlack と esa を連携させてください.*\n 以下、esa と連携させる方法の説明... \n:star: <{esa_oauth_url}|esa API へのリンク（今はテスト用にgoogle）> \n"
+				"text": "*2️⃣  esaとの連携*"
 			}
 		},
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "3️⃣ *esaのワークスペースを選択してください*\n次のボタンを押してください"
-            },
-            "accessory": {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Esaワークスペースの選択",
-                    "emoji": True,
-                },
-                "value": "hoge",
-                "action_id": "select-esa-team"
-            }
-        },
 		{
-			"type": "image",
-			"title": {
-				"type": "plain_text",
-				"text": "image1"
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": f"① Webブラウザで<{esa_oauth_url}|こちら>にアクセスします\n"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "②esaにログインします (ログイン済みの場合は省略されます)\n③GenieSlackから権限が要求されます。問題なければ承認してください\n\n⚠️承認が失敗した場合はお手数ですが①からやり直してください。"
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*3️⃣  esaのワークスペースを選択*\n\n⚠️ 2️⃣を終了した後に取り組んでください."
+			}
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "① 右のボタンを押して、ワークスペースを選択してください👉\n"
 			},
-			"image_url": "https://api.slack.com/img/blocks/bkb_template_images/onboardingComplex.jpg",
-			"alt_text": "image1"
+			"accessory": {
+				"type": "button",
+				"text": {
+					"type": "plain_text",
+					"text": "Esaワークスペースの選択"
+				},
+				"value": "hoge",
+				"action_id": "select-esa-team"
+			}
+		},
+		{
+			"type": "divider"
 		},
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": "以上、よろしくお願いいたします!:pray:"
+				"text": "初期設定は以上になります！\n *GenieSlackの初期設定を完了して、効果的な情報管理を実現しましょう！*"
 			}
 		}
 	]
@@ -134,32 +151,132 @@ def failure(args: FailureArgs) -> BoltResponse:
         status=args.suggested_status_code,
         body="Your own response to end-users here"
     )   
-       
+
+
 callback_options = CallbackOptions(success=success, failure=failure)       
-
-
-
-
 
 
 # add to slack ページの生成に関してオーバーライド
 class OAuthFlow2(OAuthFlow):
     def build_install_page_html(self, url: str, request: BoltRequest) -> str:
-        return f"""<html>
+        return f"""<!DOCTYPE html>
+<html lang="en">
+
 <head>
-<link rel="icon" href="data:,">
-<style>
-body {{
-  padding: 10px 15px;
-  font-family: verdana;
-  text-align: center;
-}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add GenieSlack to Slack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300&family=Oswald:wght@500&family=Work+Sans:wght@800&display=swap" rel="stylesheet">
+    <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background-color: #ebe4f7; /* 淡い紫色の背景 */
+            overflow: hidden; /* スクロールを禁止 */
+        }}
+        
+        .container {{
+            display: flex;
+            height: 100vh;
+        }}
+        
+        .logo-section {{
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }}
+        
+        .logo-section h1 {{
+            font-size: 30px;
+            font-weight: bold;
+            color: #4f008f; /* ポップな文字の色 */
+            font-family: 'Work Sans', sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* テキストに影をつける */
+        }}
+        
+        .content-section {{
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ebe4f7; /* 淡い紫色の背景 */
+        }}
+        
+        .content-box {{
+            padding: 20px;
+            background-color: #fff5e5; /* 淡いクリーム色の背景 */
+            border-radius: 10px; /* 角がなく丸みを帯びた形 */
+            text-align: center;
+        }}
+        
+        .add-to-slack {{
+            max-width: 200px;
+            height: auto;
+        }}
+        
+        .subtitle {{
+            font-size: 38px;
+            color: #48442f; /* ポップな文字の色 */
+            font-family: 'Oswald', sans-serif;
+            margin: 0.2em 0px;
+            text-align:left
+        }}
+
+        .appname {{
+            font-size: 80px;
+            color: #3b3827; /* ポップな文字の色 */
+            font-family: 'Work Sans', sans-serif;
+            margin: 0.2em 0px;
+            text-align:left
+        }}
+        
+        .description {{
+            margin: 0.8em 0px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #6e6849; /* ポップな文字の色 */
+            text-align:left
+        }}
+
+        #footer {{
+            border-top: solid 1px lightgray;
+            padding-bottom: 10px;
+          }}
+        #footer p {{
+            text-align: center;
+            font-family: 'Noto Sans JP', sans-serif;
+        }}
+    </style>
 </head>
+
 <body>
-<h2>GenieSlack  Installation</h2>
-<p><a href="{html.escape(url)}"><img alt=""Add to Slack"" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a></p>
+    <div class="container">
+        <div class="logo-section">
+            <a href="https://www.genieslack.kusshi.dev/">
+                <h1>GenieSlack</h1>
+            </a>
+        </div>
+        <div class="content-section">
+            <div class="content-box">
+                <p class="subtitle">Let's manage <br> your knowledge easily!</p>
+                <p class="appname">GenieSlack</p>
+                <p class="description">重要な情報の見逃しや情報の散在を防ぎ、<br>チーム全体のコラボレーションを強化できます。</p>
+                <a href="{html.escape(url)}"><img alt="Add to Slack" height="48" width="167" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+            </div>
+        </div>
+    </div>
+    <footer id="footer">
+        <p>©︎ チーム勝成</p>    
+    </footer>
 </body>
+
 </html>
 """ 
 
@@ -191,7 +308,7 @@ def show_esa_team_select_modal(ack, client, body):
     slack_team_id = body['team']['id']
 
     with mysql_driver.EsaDB() as esa_db:
-        esa_access_token = esa_db.get_token(slack_team_id)
+        esa_access_token, _ = esa_db.get_token_and_team_name(slack_team_id)
 
     # esaのOAuth認可がまだ完了していない場合
     if esa_access_token is None:
@@ -344,8 +461,8 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
             if len(categories) == 0:
                 # デフォルト記事を作成
                 post_default_posts(esa_token, esa_team_name)
-                # カテゴリ情報を再取得
-                categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
+                # デフォルトのカテゴリをセットする
+                categories = DEFAULT_CATEGORIES
 
             # メッセージを要約
             print('Start summarize')
@@ -404,6 +521,7 @@ def post_message_to_esa(token: str, team_name: str, message: str, genre: str) ->
     # 現在の実装ではは時刻情報を見出しとして使うため、重複しないことを想定している
     return f"{response['url']}#{parse.quote(title)}"
 
+
 def post_default_posts(esa_token: str, team_name: str) -> List[str]:
     """デフォルト記事を作成する
 
@@ -415,7 +533,7 @@ def post_default_posts(esa_token: str, team_name: str) -> List[str]:
         List[str]: 作成したデフォルト記事のURL
     """
     urls: List[str] = []
-    for genre in ['Tips', '予定', 'タスク']:
+    for genre in DEFAULT_CATEGORIES:
         response = esa_api.send_post(esa_token, team_name, esa_api.PostedInfo(
             name=f'GenieSlack/{genre}',
             body_md=f'# {genre}\n'
@@ -423,4 +541,6 @@ def post_default_posts(esa_token: str, team_name: str) -> List[str]:
         urls.append(response['url'])
     return urls
 
-app.start(port=3000)
+
+if __name__ == '__main__':
+    app.start(port=3000)
