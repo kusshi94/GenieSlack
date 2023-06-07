@@ -81,6 +81,23 @@ def success(args: SuccessArgs) -> BoltResponse:
 				"text": f"*2️⃣ GenieSlack と esa を連携させてください.*\n 以下、esa と連携させる方法の説明... \n:star: <{esa_oauth_url}|esa API へのリンク（今はテスト用にgoogle）> \n"
 			}
 		},
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "3️⃣ *esaのワークスペースを選択してください*\n次のボタンを押してください"
+            },
+            "accessory": {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Esaワークスペースの選択",
+                    "emoji": True,
+                },
+                "value": "hoge",
+                "action_id": "select-esa-team"
+            }
+        },
 		{
 			"type": "image",
 			"title": {
@@ -167,14 +184,150 @@ app = App(
 )
 
 
+@app.action('select-esa-team')
+def show_esa_team_select_modal(ack, client, body):
+    ack()
+
+    slack_team_id = body['team']['id']
+
+    with mysql_driver.EsaDB() as esa_db:
+        esa_access_token = esa_db.get_token(slack_team_id)
+
+    # esaのOAuth認可がまだ完了していない場合
+    if esa_access_token is None:
+        show_send_btn = False
+        blocks = [
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": "*esaのOAuth認可が完了していません。*\n*認可が完了してからもう一度試してください。*"
+                    }
+                ]
+            }
+        ]
+    # esaのOAuth認可は完了している = esaのチーム選択ができる場合
+    else:
+        team_list = esa_api.get_teams(esa_access_token)
+
+        show_send_btn = True
+        blocks = [
+            {
+                "type": "input",
+                "block_id": "select-block",
+                "element": {
+                    "type": "static_select",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select an item",
+                        "emoji": True
+                    },
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": team_name,
+                                "emoji": True
+                            },
+                            "value": team_name
+                        }
+                        for team_name in team_list
+                    ],
+                    "action_id": "static_select-action"
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "esaのチームを選択してください",
+                    "emoji": True
+                }
+            }
+        ]
+
+    send_dict = {
+        'submit': {
+            'type': 'plain_text',
+            'text': '決定',
+        },
+        'close': {
+            'type': 'plain_text',
+            'text': 'キャンセル',
+        }
+    } if show_send_btn else {}
+
+    client.views_open(
+        trigger_id=body['trigger_id'],
+        view={
+            'type': 'modal',
+            'callback_id': 'esa-team-select-modal',
+            'title': {
+                'type': 'plain_text',
+                'text': 'esa: チーム選択',
+            },
+            **send_dict,
+            'blocks': blocks,
+        }
+    )
+
+
+@app.view('esa-team-select-modal')
+def handle_esa_team_select_modal(ack, view, say, body):
+    slack_team_id = body['team']['id']
+    slack_user_id = body['user']['id']
+    inputs = view['state']['values']
+    esa_team_name = inputs.get('select-block', {}).get('static_select-action', {}).get('selected_option', {}).get('value')
+
+    # チーム名が取得できなかったとき
+    if esa_team_name is None:
+        print('error')
+        ack()
+        say(
+            text='esaのチーム名の選択に失敗しました。\n選択をもう一度やり直してください。',
+            channel=slack_user_id,
+        )
+        return
+
+
+    with mysql_driver.EsaDB() as esa_db:
+        esa_db.update_esa_team_name(slack_team_id, esa_team_name)
+
+    ack()
+    say(
+        text=f"esaのチーム名の選択に成功しました！\nチーム: {esa_team_name}",
+        channel=slack_user_id
+    )
+
+
 @app.event("reaction_added")
-def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
+def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
     # リアクションを取得
     reaction = event["reaction"]
 
     # リアクションが:summarize:なら処理開始
     if reaction == "summarize":
         item = event["item"]
+        
+        # esaのトークンとワークスペース名を取得
+        slack_team_id = body['team_id']
+        with mysql_driver.EsaDB() as esa_db:
+            esa_token, esa_team_name = esa_db.get_token_and_team_name(slack_team_id)
+            if esa_token is None:
+                slack.reply_to_message(
+                    client=client,
+                    channel_id=item['channel'],
+                    message_ts=item['ts'],
+                    message_content='esaのOAuth認証が完了していません。初期設定をやり直してください。'
+                )
+                return
+            elif esa_team_name is None:
+                slack.reply_to_message(
+                    client=client,
+                    channel_id=item['channel'],
+                    message_ts=item['ts'],
+                    message_content='esaのチーム選択が完了していません。初期設定をやり直してください。'
+                )
+                return
+        
         try:
             # リアクションが押されたメッセージの内容を取得
             response = client.reactions_get(
@@ -185,19 +338,21 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
             message = response["message"]['text']
 
             # esaから分類時に使用するカテゴリ一覧を取得
-            categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
+            categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
 
             # 投稿先がない場合、作成する
             if len(categories) == 0:
                 # デフォルト記事を作成
-                post_default_posts(ESA_TOKEN, 'ylab')
+                post_default_posts(esa_token, esa_team_name)
                 # カテゴリ情報を再取得
-                categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
+                categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
 
             # メッセージを要約
+            print('Start summarize')
             summarized_message_gift = chatgpt.summarize_message(message, categories)
             summarized_message = summarized_message_gift["message"]
             genre = summarized_message_gift["genre"]
+            print('Finish summarize')
 
             # ChatGPTの出力したgenreがesaのカテゴリ一覧に含まれているか確認
             if genre not in categories:
@@ -205,7 +360,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
                 genre = categories[0]
 
             # 要約したメッセージを投稿
-            url = post_message_to_esa(ESA_TOKEN, 'ylab', summarized_message, genre)
+            url = post_message_to_esa(esa_token, esa_team_name, summarized_message, genre)
 
             # urlをprint
             print(url)

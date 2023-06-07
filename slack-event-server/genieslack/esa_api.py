@@ -213,6 +213,30 @@ def delete_post(token: str, team_name: str, post_number: str) -> None:
 
     r.raise_for_status()
 
+
+def get_teams(token: str) -> list:
+    """ユーザの参加チームの一覧を取得
+    (https://docs.esa.io/posts/102#GET%20/v1/teams)
+
+    Args:
+        token (str): アクセストークン
+
+    Returns:
+        list: チームの名前のリスト
+    """
+    r = requests.get(
+        f"https://api.esa.io/v1/teams",
+        headers={
+            'Authorization': f"Bearer {token}",
+        },
+    )
+    r.raise_for_status()
+
+    j = json.loads(r.content)
+
+    return [item['name'] for item in j['teams']] 
+
+
 def get_genieslack_categories(token: str, team_name: str) -> List[str]:
     """GenieSlackが分類に使うカテゴリの一覧を取得
 

@@ -47,9 +47,6 @@ class MyInstallationStore(SQLAlchemyInstallationStore):
         # データベースにslack_installationsが存在しないとテーブルを作成する
         self.metadata.create_all(engine)
 
-        # TODO: 暗号化、復号化処理
-
-
 class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
     
     def __init__(
@@ -74,7 +71,6 @@ class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
 
 
 class EsaDB:
-
     def __enter__(self):
         self.conn = MySQLdb.connect(
             host=os.getenv('DB_HOST'), 
@@ -88,6 +84,7 @@ class EsaDB:
             CREATE TABLE IF NOT EXISTS esa_access_token (
                 slack_team_id varchar(16) NOT NULL PRIMARY KEY,
                 esa_access_token varchar(128) NOT NULL,
+                esa_team_name varchar(128),
                 created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP
             );
@@ -106,7 +103,6 @@ class EsaDB:
     def __exit__(self, exception_type, exception_value, traceback):
         self.conn.close()
 
-
     # esaのurlのidからteam_idを同定する
     def get_team_id_and_generated_at(self, esa_url_id: str) -> str:
         n = self.cur.execute("""
@@ -115,29 +111,33 @@ class EsaDB:
         res = self.cur.fetchone()
         return (res[0], res[1]) if n != 0 else (None, None)
 
-
-
     # esaの認証情報を読み出す
-    def get_token(self, team_id: str) -> str:
+    def get_token_and_team_name(self, team_id: str) -> str:
         n = self.cur.execute("""
-            SELECT esa_access_token
+            SELECT esa_access_token, esa_team_name
             FROM esa_access_token
             WHERE slack_team_id = %s;
         """, (team_id, ))
 
-        token = self.cur.fetchone()[0] if n != 0 else None
-        #TODO: 復号化処理
-        return token
-
+        res = self.cur.fetchone()
+        return (res[0], res[1]) if n != 0 else (None, None)
+    
+    # esaのチーム名を取得する
+    def get_esa_team_name(self, team_id: str) -> str:
+        n = self.cur.execute("""
+            SELECT esa_team_name
+            FROM esa_access_token
+            WHERE slack_team_id = %s;
+        """, (team_id, ))
+        return self.cur.fetchone()[0] if n != 0 else None
 
     def insert_token(self, team_id: str, access_token: str):
-        #TODO: 暗号化処理
         self.cur.execute("""
-            INSERT IGNORE INTO esa_access_token (slack_team_id, esa_access_token) VALUES (%s, %s);
-        """, (team_id, access_token))
+            INSERT IGNORE INTO esa_access_token (slack_team_id, esa_access_token) VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE esa_access_token = %s;
+        """, (team_id, access_token, access_token))
 
         self.conn.commit()
-
 
     def insert_oauthinfo(self, url_id: str, team_id: str, generated_at: datetime.datetime):
         self.cur.execute("""
@@ -145,8 +145,16 @@ class EsaDB:
         """, (url_id, team_id, generated_at))
 
         self.conn.commit()
-
-
+    
+    # 既存のレコードにおいてesaのチーム名だけを更新する
+    def update_esa_team_name(self, slack_team_id: str, esa_team_name: str):
+        self.cur.execute("""
+            UPDATE esa_access_token
+            SET esa_team_name = %s
+            WHERE slack_team_id = %s;
+        """, (esa_team_name, slack_team_id))
+        
+        self.conn.commit()
     
     def delete_token(self, team_id: str):
         self.cur.execute("""
@@ -162,7 +170,6 @@ class EsaDB:
 
         self.conn.commit()
 
-    
     def delete_old_oauthinfo(self, period: datetime.timedelta = datetime.timedelta(hours=3)):
         print(datetime.datetime.now())
         print(datetime.datetime.now() - period)
@@ -171,4 +178,3 @@ class EsaDB:
         """, (datetime.datetime.now() - period, ))
 
         self.conn.commit()
-
