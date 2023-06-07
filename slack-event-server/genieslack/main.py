@@ -345,7 +345,7 @@ def show_esa_team_select_modal(ack, client, body):
     slack_team_id = body['team']['id']
 
     with mysql_driver.EsaDB() as esa_db:
-        esa_access_token = esa_db.get_token(slack_team_id)
+        esa_access_token, _ = esa_db.get_token_and_team_name(slack_team_id)
 
     # esaのOAuth認可がまだ完了していない場合
     if esa_access_token is None:
