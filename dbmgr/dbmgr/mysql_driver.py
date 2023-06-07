@@ -47,9 +47,6 @@ class MyInstallationStore(SQLAlchemyInstallationStore):
         # データベースにslack_installationsが存在しないとテーブルを作成する
         self.metadata.create_all(engine)
 
-        # TODO: 暗号化、復号化処理
-
-
 class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
     
     def __init__(
@@ -115,16 +112,15 @@ class EsaDB:
         return (res[0], res[1]) if n != 0 else (None, None)
 
     # esaの認証情報を読み出す
-    def get_token(self, team_id: str) -> str:
+    def get_token_and_team_name(self, team_id: str) -> str:
         n = self.cur.execute("""
-            SELECT esa_access_token
+            SELECT esa_access_token, esa_team_name
             FROM esa_access_token
             WHERE slack_team_id = %s;
         """, (team_id, ))
 
-        token = self.cur.fetchone()[0] if n != 0 else None
-        #TODO: 復号化処理
-        return token
+        res = self.cur.fetchone()
+        return (res[0], res[1]) if n != 0 else (None, None)
     
     # esaのチーム名を取得する
     def get_esa_team_name(self, team_id: str) -> str:
@@ -136,7 +132,6 @@ class EsaDB:
         return self.cur.fetchone()[0] if n != 0 else None
 
     def insert_token(self, team_id: str, access_token: str):
-        #TODO: 暗号化処理
         self.cur.execute("""
             INSERT IGNORE INTO esa_access_token (slack_team_id, esa_access_token) VALUES (%s, %s)
             ON DUPLICATE KEY UPDATE esa_access_token = %s;

@@ -299,13 +299,35 @@ def handle_esa_team_select_modal(ack, view, say, body):
 
 
 @app.event("reaction_added")
-def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
+def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body,):
     # リアクションを取得
     reaction = event["reaction"]
 
     # リアクションが:summarize:なら処理開始
     if reaction == "summarize":
         item = event["item"]
+        
+        # esaのトークンとワークスペース名を取得
+        slack_team_id = body['team']['id']
+        with mysql_driver.EsaDB() as esa_db:
+            esa_token, esa_team_name = esa_db.get_token_and_team_name(slack_team_id)
+            if esa_token is None:
+                slack.reply_to_message(
+                    client=client,
+                    channel_id=item['channel'],
+                    message_ts=item['ts'],
+                    message_content='esaのOAuth認証が完了していません。初期設定をやり直してください。'
+                )
+                return
+            elif esa_team_name is None:
+                slack.reply_to_message(
+                    client=client,
+                    channel_id=item['channel'],
+                    message_ts=item['ts'],
+                    message_content='esaのチーム選択が完了していません。初期設定をやり直してください。'
+                )
+                return
+        
         try:
             # リアクションが押されたメッセージの内容を取得
             response = client.reactions_get(
@@ -316,14 +338,14 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
             message = response["message"]['text']
 
             # esaから分類時に使用するカテゴリ一覧を取得
-            categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
+            categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
 
             # 投稿先がない場合、作成する
             if len(categories) == 0:
                 # デフォルト記事を作成
-                post_default_posts(ESA_TOKEN, 'ylab')
+                post_default_posts(esa_token, esa_team_name)
                 # カテゴリ情報を再取得
-                categories = esa_api.get_genieslack_categories(ESA_TOKEN, 'ylab')
+                categories = esa_api.get_genieslack_categories(esa_token, esa_team_name)
 
             # メッセージを要約
             summarized_message_gift = chatgpt.summarize_message(message, categories)
@@ -336,7 +358,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event):
                 genre = categories[0]
 
             # 要約したメッセージを投稿
-            url = post_message_to_esa(ESA_TOKEN, 'ylab', summarized_message, genre)
+            url = post_message_to_esa(esa_token, esa_team_name, summarized_message, genre)
 
             # urlをprint
             print(url)
