@@ -269,6 +269,7 @@ class OAuthFlow2(OAuthFlow):
                 <p class="appname">GenieSlack</p>
                 <p class="description">重要な情報の見逃しや情報の散在を防ぎ、<br>チーム全体のコラボレーションを強化できます。</p>
                 <a href="{html.escape(url)}"><img alt="Add to Slack" height="48" width="167" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+                <p>アプリのインストールにより、<a href="https://www.genieslack.kusshi.dev/terms-of-service/">利用規約</a>に同意したものとみなします。</p>
             </div>
         </div>
     </div>
