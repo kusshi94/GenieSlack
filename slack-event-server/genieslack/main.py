@@ -285,9 +285,7 @@ class OAuthFlow2(OAuthFlow):
 oauth_settings = OAuthSettings(
     client_id=os.environ["SLACK_CLIENT_ID"],
     client_secret=os.environ["SLACK_CLIENT_SECRET"],
-    scopes=["app_mentions:read", "channels:history", "channels:read","chat:write",
-            "groups:history","groups:read","reactions:read","reactions:write", "im:history"],
-    # user_scopes=["channels:read", "chat:write"],
+    scopes=["channels:history", "chat:write", "groups:history", "reactions:read", "im:history"],
     installation_store=mysql_driver.MyInstallationStore(client_id=os.environ["SLACK_CLIENT_ID"]),
     state_store=mysql_driver.MyOAuthStateStore(expiration_seconds=600),
     callback_options=callback_options,
