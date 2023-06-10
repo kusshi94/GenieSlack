@@ -25,6 +25,12 @@ const links = [
       "Become a privacy-savvy GenieSlack expert, safeguarding your data while mastering the integration of Slack and Esa.",
   },
   {
+    text: "利用規約",
+    url: "/terms-of-service",
+    description:
+      "GenieSlack's Terms of Service, which govern the use of the app that integrates Slack and Esa, are outlined here.",
+  },
+  {
     text: "問い合わせ",
     url: "/contact",
     description:
