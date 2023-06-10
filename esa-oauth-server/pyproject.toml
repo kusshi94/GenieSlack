@@ -2,7 +2,7 @@
 name = "esa-oauth-server"
 version = "0.1.0"
 description = ""
-authors = ["kawayama <kawa130307@gmail.com>"]
+authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 packages = [
     {include = "esa_oauth_server"},
