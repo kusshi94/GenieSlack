@@ -36,6 +36,12 @@ const links = [
     description:
       "Experience peace of mind with GenieSlack's seamless integration of Slack and Esa, backed by a dedicated inquiry form and reliable support.",
   },
+  {
+    text: "メンバー紹介",
+    url: "/member",
+    description:
+      "GenieSlack is brought to life by an enthusiastic team, integrating Slack and Esa seamlessly!",
+  },
 ]
 
 const utmParameters = `?utm_source=starter&utm_medium=start-page&utm_campaign=default-starter`
