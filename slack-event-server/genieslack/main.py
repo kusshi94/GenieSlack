@@ -285,7 +285,7 @@ oauth_settings = OAuthSettings(
     client_id=os.environ["SLACK_CLIENT_ID"],
     client_secret=os.environ["SLACK_CLIENT_SECRET"],
     scopes=["app_mentions:read", "channels:history", "channels:read","chat:write",
-            "groups:history","groups:read","reactions:read","reactions:write",],
+            "groups:history","groups:read","reactions:read","reactions:write", "im:history"],
     # user_scopes=["channels:read", "chat:write"],
     installation_store=mysql_driver.MyInstallationStore(client_id=os.environ["SLACK_CLIENT_ID"]),
     state_store=mysql_driver.MyOAuthStateStore(expiration_seconds=600),
@@ -413,6 +413,17 @@ def handle_esa_team_select_modal(ack, view, say, body):
         text=f"esaのチーム名の選択に成功しました！\nチーム: {esa_team_name}",
         channel=slack_user_id
     )
+
+
+@app.message('')
+def response_dm_message(message, say):
+    if message['channel'].startswith('D'):
+        say(
+            'DMでの質問には対応していません。\n'
+            '以下のリンクを参考にしてください。\n'
+            '・使い方: https://www.genieslack.kusshi.dev/how-to-use \n'
+            '・問い合わせ: https://www.genieslack.kusshi.dev/contact'
+        )
 
 
 @app.event("reaction_added")
