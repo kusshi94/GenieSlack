@@ -34,7 +34,7 @@ class MyInstallationStore(SQLAlchemyInstallationStore):
         installations_table_name: str = SQLAlchemyInstallationStore.default_installations_table_name,
         logger: Logger = logging.getLogger(__name__),
     ):
-        engine: Engine = sqlalchemy.engine.create_engine(slack_db_url())
+        engine: Engine = sqlalchemy.engine.create_engine(slack_db_url(), pool_recycle=3600)
 
         super().__init__(
             client_id=client_id, 
@@ -56,7 +56,7 @@ class MyOAuthStateStore(SQLAlchemyOAuthStateStore):
         table_name: str = SQLAlchemyOAuthStateStore.default_table_name,
     ):
         
-        engine: Engine = sqlalchemy.engine.create_engine(slack_db_url())
+        engine: Engine = sqlalchemy.engine.create_engine(slack_db_url(), pool_recycle=3600)
 
         super().__init__(
             expiration_seconds=expiration_seconds,
