@@ -20,13 +20,14 @@ from slack_sdk.errors import SlackApiError
 from slack_sdk.oauth.installation_store import FileInstallationStore
 from slack_sdk.oauth.state_store import FileOAuthStateStore
 
-import chatgpt, esa_api, slack
+import chatgpt, esa_api, slack, gui_contents
 from dbmgr import mysql_driver
 
+# .envファイルから環境変数を読み込む
 dotenv.load_dotenv()
 
+# esaのデフォルトカテゴリ
 DEFAULT_CATEGORIES = ['Tips', '予定', 'タスク']
-
 
 # 初回メッセージの際に、パラメータrand_valueを生成して、esaのoauthのurlを作成する。
 def generate_esa_oauth_url(slack_team_id: str) -> str:
@@ -45,93 +46,7 @@ def success(args: SuccessArgs) -> BoltResponse:
     client = args.request.context.client
     try:
         esa_oauth_url=generate_esa_oauth_url(installation.team_id)
-        first_msg=[
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "こんにちは 👋 GenieSlackを追加していただきありがとうございます！:slack:\n Slackの情報を簡潔に要約・カテゴライズして、esaでその情報を見れる機能を提供いたします!"
-			}
-		},
-		{
-			"type": "divider"
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "GenieSlackを始めるために取り組んでいただきたいことが *3つ* あります！\n"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": ":star:より初期設定のより詳しい説明は<https://www.genieslack.kusshi.dev/how-to-use/|こちら>をご覧ください👉"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*1️⃣  「要約して(summarize)」リアクションの作成* \n ① Slackを開いて、メッセージ送信欄にある絵文字ボタンをクリックします\n ②ポップアップメニューから *「絵文字を追加する」ボタン* をクリックします\n③ *「画像をアップロードする」ボタン* を押し、「要約して」用の画像を指定します\n④ *「名前を付ける」* で `:summarize:` を入力します\n⑤ 最後に *「保存する」ボタン* をクリックして、新たな絵文字の追加を完了します"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*2️⃣  esaとの連携*"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": f"① Webブラウザで<{esa_oauth_url}|こちら>にアクセスします\n"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "②esaにログインします (ログイン済みの場合は省略されます)\n③GenieSlackから権限が要求されます。問題なければ承認してください\n\n⚠️承認が失敗した場合はお手数ですが①からやり直してください。"
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "*3️⃣  esaのワークスペースを選択*\n\n⚠️ 2️⃣を終了した後に取り組んでください."
-			}
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "① 右のボタンを押して、ワークスペースを選択してください👉\n"
-			},
-			"accessory": {
-				"type": "button",
-				"text": {
-					"type": "plain_text",
-					"text": "Esaワークスペースの選択"
-				},
-				"value": "hoge",
-				"action_id": "select-esa-team"
-			}
-		},
-		{
-			"type": "divider"
-		},
-		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "初期設定は以上になります！\n *GenieSlackの初期設定を完了して、効果的な情報管理を実現しましょう！*"
-			}
-		}
-	]
+        first_msg=gui_contents.get_first_message_block(esa_oauth_url)
         client.chat_postMessage(
             token=installation.bot_token, # Use the token you just got from oauth.v2.access API response
             channel=installation.user_id,  # Only with chat.postMessage API, you can use user_id here
@@ -143,7 +58,7 @@ def success(args: SuccessArgs) -> BoltResponse:
         # TODO error handling
         print("error")
 
-
+# インストール失敗時に呼び出される
 def failure(args: FailureArgs) -> BoltResponse:
     assert args.request is not None
     assert args.reason is not None
@@ -152,136 +67,15 @@ def failure(args: FailureArgs) -> BoltResponse:
         body="Your own response to end-users here"
     )   
 
+# インストール成功時と失敗時のコールバックを設定
+callback_options = CallbackOptions(success=success, failure=failure)
 
-callback_options = CallbackOptions(success=success, failure=failure)       
-
-
-# add to slack ページの生成に関してオーバーライド
+# add to slack ページの生成部分に関してオーバーライド
 class OAuthFlow2(OAuthFlow):
     def build_install_page_html(self, url: str, request: BoltRequest) -> str:
-        return f"""<!DOCTYPE html>
-<html lang="en">
+        return gui_contents.get_install_page_html(url)
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add GenieSlack to Slack</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300&family=Oswald:wght@500&family=Work+Sans:wght@800&display=swap" rel="stylesheet">
-    <style>
-        body {{
-            margin: 0;
-            padding: 0;
-            background-color: #ebe4f7; /* 淡い紫色の背景 */
-            overflow: hidden; /* スクロールを禁止 */
-        }}
-        
-        .container {{
-            display: flex;
-            height: 100vh;
-        }}
-        
-        .logo-section {{
-            flex: 1;
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
-            padding: 20px;
-            position: fixed;
-            top: 0;
-            left: 0;
-        }}
-        
-        .logo-section h1 {{
-            font-size: 30px;
-            font-weight: bold;
-            color: #4f008f; /* ポップな文字の色 */
-            font-family: 'Work Sans', sans-serif;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* テキストに影をつける */
-        }}
-        
-        .content-section {{
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #ebe4f7; /* 淡い紫色の背景 */
-        }}
-        
-        .content-box {{
-            padding: 20px;
-            background-color: #fff5e5; /* 淡いクリーム色の背景 */
-            border-radius: 10px; /* 角がなく丸みを帯びた形 */
-            text-align: center;
-        }}
-        
-        .add-to-slack {{
-            max-width: 200px;
-            height: auto;
-        }}
-        
-        .subtitle {{
-            font-size: 38px;
-            color: #48442f; /* ポップな文字の色 */
-            font-family: 'Oswald', sans-serif;
-            margin: 0.2em 0px;
-            text-align:left
-        }}
-
-        .appname {{
-            font-size: 80px;
-            color: #3b3827; /* ポップな文字の色 */
-            font-family: 'Work Sans', sans-serif;
-            margin: 0.2em 0px;
-            text-align:left
-        }}
-        
-        .description {{
-            margin: 0.8em 0px;
-            font-size: 20px;
-            font-weight: bold;
-            color: #6e6849; /* ポップな文字の色 */
-            text-align:left
-        }}
-
-        #footer {{
-            border-top: solid 1px lightgray;
-            padding-bottom: 10px;
-          }}
-        #footer p {{
-            text-align: center;
-            font-family: 'Noto Sans JP', sans-serif;
-        }}
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="logo-section">
-            <a href="https://www.genieslack.kusshi.dev/">
-                <h1>GenieSlack</h1>
-            </a>
-        </div>
-        <div class="content-section">
-            <div class="content-box">
-                <p class="subtitle">Let's manage <br> your knowledge easily!</p>
-                <p class="appname">GenieSlack</p>
-                <p class="description">重要な情報の見逃しや情報の散在を防ぎ、<br>チーム全体のコラボレーションを強化できます。</p>
-                <a href="{html.escape(url)}"><img alt="Add to Slack" height="48" width="167" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
-                <p>アプリのインストールにより、<a href="https://www.genieslack.kusshi.dev/terms-of-service/">利用規約</a>に同意したものとみなします。</p>
-            </div>
-        </div>
-    </div>
-    <footer id="footer">
-        <p>©︎ チーム勝成</p>    
-    </footer>
-</body>
-
-</html>
-""" 
-
-
+# OAuthの設定
 oauth_settings = OAuthSettings(
     client_id=os.environ["SLACK_CLIENT_ID"],
     client_secret=os.environ["SLACK_CLIENT_SECRET"],
@@ -291,7 +85,7 @@ oauth_settings = OAuthSettings(
     callback_options=callback_options,
 )
 
-
+# Bolt Appの設定
 app = App(
     signing_secret=os.environ["SLACK_SIGNING_SECRET"],
     oauth_flow=OAuthFlow2(
@@ -299,7 +93,7 @@ app = App(
     )
 )
 
-
+# esaワークスペース選択開始リクエスト受信時の処理
 @app.action('select-esa-team')
 def show_esa_team_select_modal(ack, client, body):
     ack()
@@ -312,53 +106,13 @@ def show_esa_team_select_modal(ack, client, body):
     # esaのOAuth認可がまだ完了していない場合
     if esa_access_token is None:
         show_send_btn = False
-        blocks = [
-            {
-                "type": "context",
-                "elements": [
-                    {
-                        "type": "mrkdwn",
-                        "text": "*esaのOAuth認可が完了していません。*\n*認可が完了してからもう一度試してください。*"
-                    }
-                ]
-            }
-        ]
+        blocks = gui_contents.get_esa_oauth_not_completed_block()
     # esaのOAuth認可は完了している = esaのチーム選択ができる場合
     else:
         team_list = esa_api.get_teams(esa_access_token)
 
         show_send_btn = True
-        blocks = [
-            {
-                "type": "input",
-                "block_id": "select-block",
-                "element": {
-                    "type": "static_select",
-                    "placeholder": {
-                        "type": "plain_text",
-                        "text": "Select an item",
-                        "emoji": True
-                    },
-                    "options": [
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": team_name,
-                                "emoji": True
-                            },
-                            "value": team_name
-                        }
-                        for team_name in team_list
-                    ],
-                    "action_id": "static_select-action"
-                },
-                "label": {
-                    "type": "plain_text",
-                    "text": "esaのチームを選択してください",
-                    "emoji": True
-                }
-            }
-        ]
+        blocks = gui_contents.get_esa_team_select_block(team_list)
 
     send_dict = {
         'submit': {
@@ -385,7 +139,7 @@ def show_esa_team_select_modal(ack, client, body):
         }
     )
 
-
+# esaのチーム選択モーダルでsubmitボタンが押されたときの処理
 @app.view('esa-team-select-modal')
 def handle_esa_team_select_modal(ack, view, say, body):
     slack_team_id = body['team']['id']
@@ -413,7 +167,8 @@ def handle_esa_team_select_modal(ack, view, say, body):
         channel=slack_user_id
     )
 
-
+# ダイレクトメッセージを受け取った時の処理
+# DMでの質問に対応していない旨を伝えるメッセージを返す
 @app.message('')
 def response_dm_message(message, say):
     if message['channel'].startswith('D'):
@@ -424,7 +179,7 @@ def response_dm_message(message, say):
             '・問い合わせ: https://www.genieslack.kusshi.dev/contact'
         )
 
-
+# Slackのリアクションを受け取った時の処理
 @app.event("reaction_added")
 def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
     # リアクションを取得
@@ -437,7 +192,9 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
         # esaのトークンとワークスペース名を取得
         slack_team_id = body['team_id']
         with mysql_driver.EsaDB() as esa_db:
+            # DBからの情報取得
             esa_token, esa_team_name = esa_db.get_token_and_team_name(slack_team_id)
+            # 認証が完了していない場合
             if esa_token is None:
                 slack.reply_to_message(
                     client=client,
@@ -446,6 +203,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
                     message_content='esaのOAuth認証が完了していません。初期設定をやり直してください。'
                 )
                 return
+            # ワークスペースが選択されていない場合
             elif esa_team_name is None:
                 slack.reply_to_message(
                     client=client,
@@ -462,6 +220,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
                 timestamp=item["ts"],
                 name=reaction
             )
+            # メッセージの内容を取得
             message = response["message"]['text']
 
             # esaから分類時に使用するカテゴリ一覧を取得
@@ -475,12 +234,12 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
                 categories = DEFAULT_CATEGORIES
 
             # メッセージを要約
-            print('Start summarize')
+            print('main.reaction_summarize: Start summarize')
             summarized_message_gift = chatgpt.summarize_message(message, categories)
             title = summarized_message_gift['title']
             summarized_message = summarized_message_gift["message"]
             genre = summarized_message_gift["category"]
-            print('Finish summarize')
+            print('main.reaction_summarize: Finish summarize')
 
             # ChatGPTの出力したgenreがesaのカテゴリ一覧に含まれているか確認
             if genre not in categories:
@@ -502,6 +261,8 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
 
         except slack_sdk.errors.SlackApiError as e:
             print("Error: {}".format(e))
+    else:
+        print('main.reaction_summarize: the reaction is not :summarize:. ignore it.')
 
 
 def post_message_to_esa(token: str, team_name: str, title: str, message: str, genre: str) -> str:

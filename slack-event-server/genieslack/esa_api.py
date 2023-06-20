@@ -214,7 +214,7 @@ def delete_post(token: str, team_name: str, post_number: str) -> None:
     r.raise_for_status()
 
 
-def get_teams(token: str) -> list:
+def get_teams(token: str) -> List[str]:
     """ユーザの参加チームの一覧を取得
     (https://docs.esa.io/posts/102#GET%20/v1/teams)
 
@@ -222,7 +222,7 @@ def get_teams(token: str) -> list:
         token (str): アクセストークン
 
     Returns:
-        list: チームの名前のリスト
+        List[str]: チームの名前のリスト
     """
     r = requests.get(
         f"https://api.esa.io/v1/teams",
