@@ -289,6 +289,8 @@ oauth_settings = OAuthSettings(
     installation_store=mysql_driver.MyInstallationStore(client_id=os.environ["SLACK_CLIENT_ID"]),
     state_store=mysql_driver.MyOAuthStateStore(expiration_seconds=600),
     callback_options=callback_options,
+    # トークンを毎回更新する
+    token_rotation_expiration_minutes=60*24
 )
 
 
