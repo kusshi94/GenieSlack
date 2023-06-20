@@ -19,6 +19,8 @@ from slack_bolt.response import BoltResponse
 from slack_sdk.errors import SlackApiError
 from slack_sdk.oauth.installation_store import FileInstallationStore
 from slack_sdk.oauth.state_store import FileOAuthStateStore
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 import chatgpt, esa_api, slack
 from dbmgr import mysql_driver
