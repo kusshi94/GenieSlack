@@ -61,7 +61,6 @@ def summarize_message(message: str, categories: List[str]) -> dict:
     message_prompt = f"""\
     以下の文章を要約してください。
     すべてmarkdown形式のリストにして出力して下さい。
-    URLがある場合は必ず含めて下さい。
 
     [文章]
     {message}
