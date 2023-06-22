@@ -529,8 +529,6 @@ def post_message_to_esa(token: str, team_name: str, title: str, message: str, ge
         body_md=f"{post_info['body_md']}\n## {title}\n{message}\n"
     ))
 
-    # HACK: 同じ名前の見出しが複数ある場合、一番上のものに飛んでしまう
-    # 現在の実装ではは時刻情報を見出しとして使うため、重複しないことを想定している
     return f"{response['url']}#{parse.quote(title)}"
 
 
