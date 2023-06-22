@@ -477,8 +477,9 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
             # メッセージを要約
             print('Start summarize')
             summarized_message_gift = chatgpt.summarize_message(message, categories)
+            title = summarized_message_gift['title']
             summarized_message = summarized_message_gift["message"]
-            genre = summarized_message_gift["genre"]
+            genre = summarized_message_gift["category"]
             print('Finish summarize')
 
             # ChatGPTの出力したgenreがesaのカテゴリ一覧に含まれているか確認
@@ -487,7 +488,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
                 genre = categories[0]
 
             # 要約したメッセージを投稿
-            url = post_message_to_esa(esa_token, esa_team_name, summarized_message, genre)
+            url = post_message_to_esa(esa_token, esa_team_name, title, summarized_message, genre)
 
             # urlをprint
             print(url)
@@ -503,7 +504,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
             print("Error: {}".format(e))
 
 
-def post_message_to_esa(token: str, team_name: str, message: str, genre: str) -> str:
+def post_message_to_esa(token: str, team_name: str, title: str, message: str, genre: str) -> str:
     """要約したメッセージをesa記事に追記する
 
     Args:
@@ -518,8 +519,9 @@ def post_message_to_esa(token: str, team_name: str, message: str, genre: str) ->
     # 投稿先の記事情報を取得
     post_info_list = esa_api.get_posts(token, team_name, f'title:{genre}')
 
-    # 見出しとして使う時刻情報を取得
-    title = str(datetime.datetime.now())
+    # タイトルに日時を追加
+    dt_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    title = f"{dt_str} {title}"
 
     # 追記する
     post_info = post_info_list[0]
@@ -527,8 +529,6 @@ def post_message_to_esa(token: str, team_name: str, message: str, genre: str) ->
         body_md=f"{post_info['body_md']}\n## {title}\n{message}\n"
     ))
 
-    # HACK: 同じ名前の見出しが複数ある場合、一番上のものに飛んでしまう
-    # 現在の実装ではは時刻情報を見出しとして使うため、重複しないことを想定している
     return f"{response['url']}#{parse.quote(title)}"
 
 

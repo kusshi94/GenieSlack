@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from typing import List
@@ -29,22 +30,53 @@ def retry_wrapper(func):
 
 
 def summarize_message(message: str, categories: List[str]) -> dict:
+    # function calling用の関数
+    def get_summarize_info(title: str, category: str) -> dict:
+        return json.dumps({
+            'title': title,
+            'category': category,
+        })
+    
+    # 分類とタイトル用の関数
+    functions = [{
+        'name': 'get_summarize_info',
+        'description': '要約結果の情報を得る',
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                'title': {
+                    'type': 'string',
+                    'description': '要約したメッセージのタイトル',
+                },
+                'category': {
+                    'type': 'string',
+                    'description': f"要約したメッセージのカテゴリ"
+                }
+            },
+            'required': ['title', 'category'],
+        }
+    }]
+
     # 要約用プロンプト
     message_prompt = f"""\
-以下の文章を要約してください。
-すべてmarkdown形式のリストにして出力して下さい。
-URLがある場合は必ず含めて下さい。
+    以下の文章を要約してください。
+    すべてmarkdown形式のリストにして出力して下さい。
 
-{message}
-"""
+    [文章]
+    {message}
+    """
 
-    # 分類用プロンプト
-    genre_prompt = f"""\
-上記の文章のジャンルを以下の中から1つ選択して下さい。
+    # 分類とタイトル用プロンプト
+    genre_title_prompt = f"""
+    以下の文章のタイトルとジャンルを教えて下さい。
+    文章のジャンルを以下の中から1つ選択してください。
 
-[ジャンル]
+    [文章]
+    {message}
 
-""" + '\n'.join(categories)
+    [ジャンル]
+    {categories}
+    """
 
     # openai.ChatCompletion.create 毎にエラー処理したいのでこういう形にしています
 
@@ -52,7 +84,7 @@ URLがある場合は必ず含めて下さい。
     def inner_message():
         print('Call chatgpt.summarize_message.intter_message')
         response = openai.ChatCompletion.create(
-            model='gpt-3.5-turbo',
+            model='gpt-3.5-turbo-0613',
             messages=[
                 {'role': 'user', 'content': message_prompt},
             ],
@@ -61,27 +93,26 @@ URLがある場合は必ず含めて下さい。
         print('Finish chatgpt.summarize_message.intter_message')
         return response['choices'][0]['message']['content']
 
-    summarized_message = inner_message()
-
     @retry_wrapper
     def inner_genre():
         print('Call chatgpt.summarize_message.inner_genre')
         response = openai.ChatCompletion.create(
-            model='gpt-3.5-turbo',
+            model='gpt-3.5-turbo-0613',
             messages=[
-                {'role': 'user', 'content': message_prompt},
-                {'role': 'system', 'content': summarized_message},
-                {'role': 'user', 'content': genre_prompt},
+                {'role': 'user', 'content': genre_title_prompt},
             ],
             temperature=0.25,
+            functions=functions,
+            function_call='auto',
         )
         print('Finish chatgpt.summarize_message.inner_genre')
-        return response['choices'][0]['message']['content']
+        return response['choices'][0]['message']['function_call']['arguments']
 
-    return {
-        'message': summarized_message,
-        'genre': inner_genre(),
-    }
+    result_text = inner_genre()
+    result = json.loads(result_text)
+    result['message'] = inner_message()
+
+    return result
 
 
 if __name__ == '__main__':
