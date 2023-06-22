@@ -479,7 +479,7 @@ def reaction_summarize(client: slack_sdk.web.client.WebClient, event, body):
             summarized_message_gift = chatgpt.summarize_message(message, categories)
             title = summarized_message_gift['title']
             summarized_message = summarized_message_gift["message"]
-            genre = summarized_message_gift["genre"]
+            genre = summarized_message_gift["category"]
             print('Finish summarize')
 
             # ChatGPTの出力したgenreがesaのカテゴリ一覧に含まれているか確認
