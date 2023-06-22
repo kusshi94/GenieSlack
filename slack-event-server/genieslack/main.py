@@ -519,6 +519,10 @@ def post_message_to_esa(token: str, team_name: str, title: str, message: str, ge
     # 投稿先の記事情報を取得
     post_info_list = esa_api.get_posts(token, team_name, f'title:{genre}')
 
+    # タイトルに日時を追加
+    dt_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    title = f"{dt_str} {title}"
+
     # 追記する
     post_info = post_info_list[0]
     response = esa_api.edit_post(token, team_name, post_info['number'], esa_api.EditorialInfo(
