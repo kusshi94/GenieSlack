@@ -70,9 +70,9 @@ const IndexPage = () => {
         <h1 style={{ marginBottom: "0" }}>
           Welcome to <b>GenieSlack!</b>
         </h1>
-        <h3>
+        <h2 style={{fontSize: "1.17em"}}>
           情報のストックを、もっと手軽に
-        </h3>
+        </h2>
         <a href="https://genieslack.kusshi.dev/slack/install" className={styles.addToSlackBtn}>
           <div style={{display: "flex"}}>
             <img src={publicURL} width="50px" height="50px" style={{ margin: "0px"}} alt="slack-logo" />
