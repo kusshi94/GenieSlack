@@ -4,6 +4,7 @@ import { StaticImage } from "gatsby-plugin-image"
 import Layout from "../components/layout"
 import Seo from "../components/seo"
 import * as styles from "../components/index.module.css"
+import { graphql, useStaticQuery } from "gatsby"
 
 const links = [
   {
@@ -40,38 +41,61 @@ const links = [
 
 const utmParameters = `?utm_source=starter&utm_medium=start-page&utm_campaign=default-starter`
 
-const IndexPage = () => (
-  <Layout>
-    <div className={styles.textCenter}>
-      <StaticImage
-        src="../images/product_logo.png"
-        placeholder="product logo"
-        loading="eager"
-        width={128}
-        quality={95}
-        formats={["auto", "webp", "avif"]}
-        alt=""
-        style={{ marginBottom: `var(--space-3)` }}
-      />
-      <h1>
-        Welcome to <b>GenieSlack!</b>
-      </h1>
-    </div>
-    <ul className={styles.list}>
-      {links.map(link => (
-        <li key={link.url} className={styles.listItem}>
-          <a
-            className={styles.listItemLink}
-            href={`${link.url}${utmParameters}`}
-          >
-            {link.text} ↗
-          </a>
-          <p className={styles.listItemDescription}>{link.description}</p>
-        </li>
-      ))}
-    </ul>
-  </Layout>
-)
+const IndexPage = () => {
+  const slackLogoImage = useStaticQuery(graphql`
+    query {
+      file(relativePath: { eq: "Slack-mark.svg" }) {
+        publicURL
+      }
+    }
+  `);
+
+  console.log(slackLogoImage);
+
+  const { publicURL } = slackLogoImage.file;
+
+  return (
+    <Layout>
+      <div className={styles.textCenter}>
+        <StaticImage
+          src="../images/product_logo.png"
+          placeholder="product logo"
+          loading="eager"
+          width={128}
+          quality={95}
+          formats={["auto", "webp", "avif"]}
+          alt=""
+          style={{ marginBottom: `var(--space-3)` }}
+        />
+        <h1 style={{ marginBottom: "0" }}>
+          Welcome to <b>GenieSlack!</b>
+        </h1>
+        <h3>
+          情報のストックを、もっと手軽に
+        </h3>
+        <a href="https://genieslack.kusshi.dev/slack/install" className={styles.addToSlackBtn}>
+          <div style={{display: "flex"}}>
+            <img src={publicURL} width="50px" height="50px" style={{ margin: "0px"}} alt="slack-logo" />
+            <div style={{lineHeight: "50px"}}>Install</div>
+          </div>
+        </a>
+      </div>
+      <ul className={styles.list}>
+        {links.map(link => (
+          <li key={link.url} className={styles.listItem}>
+            <a
+              className={styles.listItemLink}
+              href={`${link.url}${utmParameters}`}
+            >
+              {link.text} ↗
+            </a>
+            <p className={styles.listItemDescription}>{link.description}</p>
+          </li>
+        ))}
+      </ul>
+    </Layout>
+  )
+}
 
 /**
  * Head export to define metadata for the page
