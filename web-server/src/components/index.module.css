@@ -52,3 +52,25 @@
   max-width: none;
   line-height: var(--line-height-loose);
 }
+
+.addToSlackBtn {
+  position: relative;
+  display: inline-block;
+  /* padding: 12px 36px; */
+  padding: 0px 20px;
+  margin: 10px 0;
+  color: #fff;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 18px;
+  letter-spacing: 2px;
+  border-radius: 40px;
+  background-image: linear-gradient(to right, #DA22FF 0%, #9733EE  51%, #DA22FF  100%);
+  background-size: 200% auto;
+  transition: .5s;
+}
+
+.addToSlackBtn:hover {
+  background-position: right center;
+  /* background: linear-gradient(90deg, #F55DE5, #A853FA); */
+}
