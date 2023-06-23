@@ -248,7 +248,7 @@ def get_install_page_html(url :str) -> str:
         </div>
         <div class="content-section">
             <div class="content-box">
-                <p class="subtitle">Let's manage <br> your knowledge easily!</p>
+                <p class="subtitle">情報のストックを、もっと手軽に</p>
                 <p class="appname">GenieSlack</p>
                 <p class="description">重要な情報の見逃しや情報の散在を防ぎ、<br>チーム全体のコラボレーションを強化できます。</p>
                 <a href="{html.escape(url)}"><img alt="Add to Slack" height="48" width="167" src="https://platform.slack-edge.com/img/add_to_slack.png" srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
