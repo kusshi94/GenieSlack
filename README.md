@@ -19,8 +19,9 @@ GenieSlackは、[技育CAMP](https://talent.supporterz.jp/geekcamp/)ハッカソ
 
 ### 参加回
 
-- 2023年4月15-16日 技育CAMPハッカソン vol.2
-- 2023年6月24日 技育CAMPアドバンス
+- 2023年4月15-16日 技育CAMPハッカソン vol.2（努力賞）
+- 2023年6月24日 技育CAMPアドバンス（ウイングアーク1st株式会社賞）
 
 ### 関連記事
-[技育CAMPハッカソンvol.2で努力賞を受賞しました【チーム勝成】 - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/04/30/131933)
+[技育CAMPハッカソンvol.2で努力賞を受賞しました - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/04/30/131933)
+[技育CAMPアドバンスで【企業賞】を受賞しました - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/06/25/110702)
