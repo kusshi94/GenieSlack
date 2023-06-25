@@ -23,5 +23,5 @@ GenieSlackは、[技育CAMP](https://talent.supporterz.jp/geekcamp/)ハッカソ
 - 2023年6月24日 技育CAMPアドバンス（ウイングアーク1st株式会社賞）
 
 ### 関連記事
-[技育CAMPハッカソンvol.2で努力賞を受賞しました - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/04/30/131933)
-[技育CAMPアドバンスで【企業賞】を受賞しました - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/06/25/110702)
+- [技育CAMPハッカソンvol.2で努力賞を受賞しました - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/04/30/131933)
+- [技育CAMPアドバンスで【企業賞】を受賞しました - kusshi’s blog](https://kusshi.hatenablog.jp/entry/2023/06/25/110702)
