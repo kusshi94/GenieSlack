@@ -40,6 +40,8 @@ const links = [
   {
     text: "チーム勝成 メンバー紹介",
     url: "/member",
+    description:
+      "The engineers behind GenieSlack are introduced here, along with their contact information.",
   },
 ]
 
