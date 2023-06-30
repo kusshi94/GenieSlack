@@ -9,7 +9,7 @@
  */
 module.exports = {
   siteMetadata: {
-    title: `GenieSlack`,
+    title: `GenieSlack - 情報のストックを、もっと手軽に`,
     description: `Slackのメッセージを要約してEsaに投稿するツール`,
     author: `@team_katsunari`,
     siteUrl: `https://genieslack.kusshi.dev/`,
