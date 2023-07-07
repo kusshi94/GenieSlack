@@ -16,7 +16,7 @@ def retry_wrapper(func):
             try:
                 value = func(*args, **kwargs)
                 break
-            except (openai.error.RateLimitError, openai.error.APIConnectionError):
+            except (openai.error.RateLimitError, openai.error.APIConnectionError, openai.error.ServiceUnavailableError):
                 print('retry: sleep 20s')
                 time.sleep(20)
                 continue
