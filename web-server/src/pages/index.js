@@ -79,12 +79,12 @@ const IndexPage = () => {
         <h2 style={{fontSize: "1.17em", marginBlockStart: "1em", marginBlockEnd: "1em"}}>
           情報のストックを、もっと手軽に
         </h2>
-        <a href="https://genieslack.kusshi.dev/slack/install" className={styles.addToSlackBtn}>
-          <div style={{display: "flex"}}>
-            <img src={publicURL} width="50px" height="50px" style={{ margin: "0px"}} alt="slack-logo" />
-            <div style={{lineHeight: "50px"}}>Install</div>
+        <div className={styles.addToSlackBtn}>
+          <div style={{ display: "flex" }}>
+            <img src={publicURL} width="50px" height="50px" style={{ margin: "0px" }} alt="slack-logo" />
+            <div style={{ lineHeight: "50px" }}>公開終了しました</div>
           </div>
-        </a>
+        </div>
       </div>
       <ul className={styles.list}>
         {links.map(link => (
